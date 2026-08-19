@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import bisect
 import json
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -131,21 +132,35 @@ def _groupby_mean(values: list[pd.Series]) -> pd.Series:
     """
     if not values:
         return pd.Series(dtype=float)
+    major_version = int(str(pd.__version__).split(".", 1)[0])
+    if major_version >= 3:
+        raise RuntimeError(
+            "冻结八状态计算要求 pandas>=2.0,<3.0；"
+            f"当前 pandas={pd.__version__}，请先安装包内 requirements.txt"
+        )
     matrix = pd.concat(
         [pd.to_numeric(value, errors="coerce").rename(str(pos)) for pos, value in enumerate(values)],
         axis=1,
     )
     valid = matrix.notna().all(axis=1)
     # This is the same reduction as the reference long-form
-    # ``groupby([trade_date, family]).mean()``.  Use melt instead of the
-    # deprecated default implementation of DataFrame.stack so the remote run
-    # stays warning-free on newer pandas versions.
-    long = (
-        matrix.rename_axis("__group_key__")
-        .reset_index()
-        .melt(id_vars="__group_key__", value_name="value")
-    )
-    reduced = long.groupby("__group_key__", sort=False, dropna=False)["value"].mean()
+    # ``groupby([trade_date, family]).mean()``.  Preserve the original
+    # pandas-2.x stack accumulation order: the downstream rolling percentile
+    # is rank based, so changing the reduction implementation can move a
+    # tied observation by one ULP and move a frozen signal to the adjacent
+    # rank.  ``future_stack=False`` makes that choice explicit on pandas 2.1+;
+    # the fallback keeps the package compatible with pandas 2.0.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            message="The previous implementation of stack is deprecated.*",
+            category=FutureWarning,
+        )
+        try:
+            stacked = matrix.stack(future_stack=False, dropna=False)
+        except TypeError:
+            stacked = matrix.stack(dropna=False)
+    reduced = stacked.groupby(level=0, sort=False).mean()
     reduced = reduced.reindex(matrix.index)
     reduced.loc[~valid] = np.nan
     return reduced.astype(float)

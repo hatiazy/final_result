@@ -181,6 +181,26 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
         }
     )
 
+    # The nonzero exporter already emits its effective-date grid.  Check that
+    # this grid is exactly the next actual spot date for every formation row,
+    # with only the final formation row allowed to use the next business day
+    # until a new spot row is available.  This prevents a later fillna(0) from
+    # silently creating an execution-day placeholder.
+    first_execution = pd.Timestamp(nonzero["date"].min())
+    expected_nonzero_dates = calendar[
+        (calendar >= first_execution) & (calendar <= calendar[-1])
+    ]
+    if pd.Timestamp(nonzero["date"].max()) > pd.Timestamp(calendar[-1]):
+        expected_nonzero_dates = expected_nonzero_dates.append(
+            pd.DatetimeIndex([pd.Timestamp(calendar[-1]) + pd.offsets.BDay(1)])
+        )
+    if not nonzero["date"].equals(pd.Series(expected_nonzero_dates, name="date")):
+        raise ValueError(
+            "非零信号执行日网格不是形成日后的下一实际交易日；"
+            f"实际={nonzero['date'].min()}->{nonzero['date'].max()}，"
+            f"期望={expected_nonzero_dates.min()}->{expected_nonzero_dates.max()}"
+        )
+
     for side, label in (("up", "大涨"), ("down", "大跌")):
         prediction_path = output_dir / f"remote_{side}_extreme_predictions.csv"
         if not prediction_path.is_file():
@@ -210,8 +230,15 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
         })
         if mapped["实际执行日"].duplicated().any():
             raise ValueError(f"{label} 映射到实际执行日后出现重复日期")
+        if set(mapped["实际执行日"]) != set(pd.to_datetime(result["实际执行日"])):
+            raise ValueError(
+                f"{label}形成日映射后的执行日集合与非零执行日集合不一致；"
+                "拒绝用 0 填补缺失信号"
+            )
         result = result.merge(mapped, on="实际执行日", how="outer")
 
+    if result[COMPACT_COLUMNS[1:]].isna().any().any():
+        raise ValueError("六列表存在未由形成日信号覆盖的执行日，拒绝填入默认 0")
     for column in ["三状态", "+1反转", "-1反转", "大涨", "大跌"]:
         result[column] = pd.to_numeric(result[column], errors="coerce").fillna(0).astype("int8")
     result["实际执行日"] = pd.to_datetime(result["实际执行日"], errors="raise").dt.strftime("%Y-%m-%d")
@@ -220,6 +247,10 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
 
     output_path = output_dir.parent / "最终执行日简表.csv"
     result.to_csv(output_path, index=False, encoding="utf-8-sig")
+    first_execution = pd.Timestamp(nonzero["date"].min())
+    first_formation = calendar[calendar < first_execution][-1]
+    latest_formation = pd.Timestamp(calendar[-1])
+    latest_execution = latest_formation + pd.offsets.BDay(1)
     record = {
         "operation": "只用远端现货和包内冻结参数生成六列表；不读取本地参考，不做比较",
         "spot_path": str(spot_path),
@@ -235,7 +266,18 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
             "big_down": {"version": "V156", "candidate": "base_0621", "threshold": 0.6832148298881413},
             "big_up": {"version": "V189", "candidate": "base_1839", "threshold": 0.8135114753699175},
         },
-        "execution_date_rule": "非零结果本身已按实际执行日输出；大涨/大跌形成日映射到下一实际现货交易日；最新形成日尚无下一现货行时按 BDay(1) 生成下一执行日",
+        "execution_date_rule": "每行均为形成日收盘后的计算结果；实际执行日是下一实际现货交易日；最新形成日尚无下一现货行时按下一工作日映射，数值仍来自最新形成日计算",
+        "date_mapping": {
+            "verified": True,
+            "formation_date_min": first_formation.strftime("%Y-%m-%d"),
+            "formation_date_max": latest_formation.strftime("%Y-%m-%d"),
+            "execution_date_min": str(result["实际执行日"].min()),
+            "execution_date_max": str(result["实际执行日"].max()),
+            "latest_formation_to_execution": f"{latest_formation.strftime('%Y-%m-%d')} -> {latest_execution.strftime('%Y-%m-%d')}",
+            "nonzero_grid_exact": True,
+            "extreme_formation_to_execution_exact": True,
+            "missing_signal_values_filled": False,
+        },
         "extreme_prediction_input": "remote_up_extreme_predictions.csv / remote_down_extreme_predictions.csv",
         "candidate_rebuild": False,
         "comparison_performed": False,
