@@ -514,6 +514,43 @@ def _phase_result(
     plot["o2o_bp"] = target * 10000.0
     plot["signed_o2o_bp"] = (target if side == "up" else -target) * 10000.0
     plot["marker_color"] = np.where(~research_active, "none", np.where(actual_event, "correct", "incorrect"))
+
+    # Keep a separate all-rows prediction view for the runtime exporter.  The
+    # research/plot view above intentionally excludes rows whose future O2O
+    # label is not available yet; that is correct for historical metrics but it
+    # must not suppress the latest signal that is meant for the next open.
+    runtime = observed.loc[observed.date.ge("2018-01-01")].copy()
+    runtime_score = full_score[runtime.index.to_numpy()]
+    runtime_active = full_active[runtime.index.to_numpy()]
+    runtime_target = runtime.future_open_to_open_return_1d.astype(float).to_numpy()
+    runtime_labeled = np.isfinite(runtime_target)
+    runtime_actual_event = runtime_target <= float(thresholds["q10"]) if side == "down" else runtime_target >= float(thresholds["q90"])
+    runtime_phase = np.select(
+        [runtime.date.dt.year.between(2018, 2022), runtime.date.dt.year.between(2023, 2024), runtime.date.dt.year.ge(2025)],
+        ["development", "validation", "test"],
+        default="other",
+    )
+    prediction = runtime.loc[:, ["date", "close", "future_open_to_open_return_1d"]].copy()
+    prediction["date"] = prediction.date.dt.strftime("%Y-%m-%d")
+    prediction["phase"] = runtime_phase
+    prediction["score"] = runtime_score
+    prediction["predicted"] = runtime_active
+    prediction["actual_extreme"] = np.where(runtime_labeled, runtime_actual_event, np.nan)
+    prediction["correct"] = np.where(runtime_labeled, runtime_active & runtime_actual_event, np.nan)
+    prediction["direction_correct"] = np.where(
+        runtime_labeled,
+        runtime_active & ((runtime_target > 0) if side == "up" else (runtime_target < 0)),
+        np.nan,
+    )
+    prediction["direction_neutral"] = np.where(runtime_labeled, runtime_active & (runtime_target == 0), np.nan)
+    prediction["prediction_side"] = np.where(runtime_active, side, "none")
+    prediction["o2o_bp"] = runtime_target * 10000.0
+    prediction["signed_o2o_bp"] = (runtime_target if side == "up" else -runtime_target) * 10000.0
+    prediction["marker_color"] = np.where(
+        ~runtime_labeled,
+        "pending",
+        np.where(~runtime_active, "none", np.where(runtime_actual_event, "correct", "incorrect")),
+    )
     del dev_active, val_active, test_active
     return {
         "full_cycle": full,
@@ -529,6 +566,7 @@ def _phase_result(
         },
         "annual_metrics": annual.to_dict(orient="records"),
         "plot_data": plot.to_dict(orient="records"),
+        "prediction_data": prediction.to_dict(orient="records"),
         "test_used_for_selection": False,
         "frozen_first_before_test": True,
         "freeze_artifact_path": str(freeze_artifact),

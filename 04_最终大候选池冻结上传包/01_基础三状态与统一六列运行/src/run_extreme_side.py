@@ -61,6 +61,22 @@ def main() -> None:
     daily["direction_correct"] = daily["direction_correct"].astype(int)
     daily.to_csv(args.output / f"remote_{args.side}_extreme_daily.csv", index=False, encoding="utf-8-sig")
 
+    # The historical daily file is intentionally limited to rows with a
+    # realized O2O label.  The runtime feed must also contain the latest
+    # unlabelled prediction, because that is the signal for the next open.
+    prediction = pd.DataFrame(result["periods"]["prediction_data"])
+    prediction_required = ["date", "score", "predicted", "phase"]
+    missing_prediction = sorted(set(prediction_required) - set(prediction.columns))
+    if missing_prediction:
+        raise ValueError(f"{args.side} 侧运行预测结果缺少列: {missing_prediction}")
+    prediction = prediction.loc[:, prediction_required].copy()
+    prediction["predicted"] = prediction["predicted"].astype(int)
+    prediction.to_csv(
+        args.output / f"remote_{args.side}_extreme_predictions.csv",
+        index=False,
+        encoding="utf-8-sig",
+    )
+
     summary = {
         "status": result["status"],
         "side": result["side"],
@@ -73,11 +89,15 @@ def main() -> None:
         "periods": {
             key: value
             for key, value in result.get("periods", {}).items()
-            if key != "plot_data"
+            if key not in {"plot_data", "prediction_data"}
         },
         "daily_rows": int(len(daily)),
         "daily_date_min": str(daily["date"].min()) if len(daily) else None,
         "daily_date_max": str(daily["date"].max()) if len(daily) else None,
+        "prediction_rows": int(len(prediction)),
+        "prediction_date_min": str(prediction["date"].min()) if len(prediction) else None,
+        "prediction_date_max": str(prediction["date"].max()) if len(prediction) else None,
+        "prediction_date_role": "formation date; the compact exporter maps it to the next actual execution date",
     }
     (args.output / f"remote_{args.side}_extreme_summary.json").write_text(
         json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default) + "\n",

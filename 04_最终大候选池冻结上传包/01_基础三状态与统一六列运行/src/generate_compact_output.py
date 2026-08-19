@@ -3,8 +3,9 @@ from __future__ import annotations
 """Generate the six-column execution-date output from remote spot data only.
 
 This module deliberately contains no local-reference comparison.  It runs the
-already-frozen V55/V80/V156/V189 engines, then aligns their outputs to the
-actual execution-date grid and writes one compact CSV.
+already-frozen V55/V80/V156/V189 engines, keeps the latest extreme predictions
+even when their future O2O labels are not available yet, then aligns all
+outputs to the actual execution-date grid and writes one compact CSV.
 """
 
 import argparse
@@ -171,11 +172,30 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
     )
 
     for side, label in (("up", "大涨"), ("down", "大跌")):
-        extreme = load_extreme(output_dir / f"remote_{side}_extreme_daily.csv")
+        prediction_path = output_dir / f"remote_{side}_extreme_predictions.csv"
+        if not prediction_path.is_file():
+            raise FileNotFoundError(
+                f"缺少{label}最新运行预测文件：{prediction_path}；"
+                "请先用当前版本的 run_extreme_side.py 生成，不能只使用历史评价文件"
+            )
+        extreme = load_extreme(prediction_path)
+        mapped_dates = extreme["date"].map(next_execution)
+        pending = mapped_dates.isna()
+        if pending.any():
+            pending_formations = extreme.loc[pending, "date"]
+            if len(pending_formations) != 1 or pd.Timestamp(pending_formations.iloc[0]) != pd.Timestamp(calendar[-1]):
+                raise ValueError(
+                    f"{label}存在无法映射到实际执行日的形成日："
+                    f"{pending_formations.dt.strftime('%Y-%m-%d').tolist()}"
+                )
+            # The latest formation close is allowed to be ahead of the spot
+            # file.  Keep the same next-weekday display convention as the
+            # nonzero exporter until the next actual spot row arrives.
+            mapped_dates.loc[pending] = pending_formations + pd.offsets.BDay(1)
         mapped = pd.DataFrame({
-            "实际执行日": extreme["date"].map(next_execution),
+            "实际执行日": mapped_dates,
             label: extreme["predicted"].astype("int8"),
-        }).dropna(subset=["实际执行日"])
+        })
         if mapped["实际执行日"].duplicated().any():
             raise ValueError(f"{label} 映射到实际执行日后出现重复日期")
         result = result.merge(mapped, on="实际执行日", how="outer")
@@ -203,7 +223,8 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
             "big_down": {"version": "V156", "candidate": "base_0621", "threshold": 0.6832148298881413},
             "big_up": {"version": "V189", "candidate": "base_1839", "threshold": 0.8135114753699175},
         },
-        "execution_date_rule": "非零结果本身已按实际执行日输出；大涨/大跌形成日映射到下一实际现货交易日",
+        "execution_date_rule": "非零结果本身已按实际执行日输出；大涨/大跌形成日映射到下一实际现货交易日；最新形成日尚无下一现货行时暂用 BDay(1) 待执行占位",
+        "extreme_prediction_input": "remote_up_extreme_predictions.csv / remote_down_extreme_predictions.csv",
         "candidate_rebuild": False,
         "comparison_performed": False,
     }
