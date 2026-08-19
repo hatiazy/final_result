@@ -1,4 +1,0 @@
-﻿state,segments,mean_length,median_length,net_adverse_segments,path_reversal_ge_2pct,path_reversal_ge_3pct,path_reversal_ge_5pct,path_reversal_ge_3pct_share_pct,segments_with_signal,segments_with_3pct_reversal,reversal_segments_captured,capture_rate_among_3pct_reversals_pct,mean_reversal_duration_trading_days_3pct,median_reversal_duration_trading_days_3pct,mean_signal_lead_trading_days,median_signal_lead_trading_days,mean_trading_days_after_first_signal_to_segment_end,mean_signal_position_pct
--1,38,6.131578947368421,6.0,15.0,23,11,4,28.947368421052634,20,11,8,72.72727272727273,2.6363636363636362,2.0,1.25,1.0,1.25,85.08928571428571
-0,74,19.62162162162162,13.0,,0,0,0,0.0,69,0,0,,,,,,17.652173913043477,29.111115582953328
-1,35,11.6,9.0,11.0,16,10,7,28.57142857142857,17,10,6,60.0,2.0,2.0,3.8333333333333335,2.5,4.823529411764706,66.30860898784216

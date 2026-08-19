@@ -1,7 +1,0 @@
-numpy>=1.24,<3
-pandas>=2.0,<3
-scipy>=1.10,<2
-scikit-learn>=1.4,<2
-pyarrow>=12
-jupyter>=1
-nbformat>=5.9
