@@ -2,8 +2,8 @@
   "document_type": "current_four_signal_freeze_registry",
   "document_status": "research_evidence_index_not_runtime_entry",
   "as_of": "2026-08-18",
-  "runtime_package": "../06_最终上传包",
-  "research_rebuild_package": "../05_上传包_日期解析修正版",
+  "runtime_package": "../../01_基础三状态与统一六列运行",
+  "research_rebuild_package": "../../../05_上传包_日期解析修正版",
   "research_protocol": {
     "development": "2018-01-01..2022-12-31",
     "validation": "2023-01-01..2024-12-31",
@@ -35,7 +35,7 @@
         "ranked_rows_after_gates": 264,
         "evidence_file": "../02_候选池冻结证据副本/1545_rq_run_company_sides.json"
       },
-      "freeze_source": "../06_最终上传包/packages/nonzero/1545/src/signal_export.py",
+      "freeze_source": "../../01_基础三状态与统一六列运行/packages/nonzero/1545/src/signal_export.py",
       "selection_rule": "Development+Validation ranking; threshold fitted on Development",
       "test_used_for_selection": false,
       "runtime_candidate_grid_rebuilt": false
@@ -59,7 +59,7 @@
         "ranked_rows_after_gates": 341,
         "evidence_file": "../02_候选池冻结证据副本/1545_rq_run_company_sides.json"
       },
-      "freeze_source": "../06_最终上传包/packages/nonzero/1545/src/signal_export.py",
+      "freeze_source": "../../01_基础三状态与统一六列运行/packages/nonzero/1545/src/signal_export.py",
       "selection_rule": "Development+Validation ranking; threshold fitted on Development",
       "test_used_for_selection": false,
       "runtime_candidate_grid_rebuilt": false
@@ -81,7 +81,7 @@
         "../02_候选池冻结证据副本/FROZEN_V156_logic_freeze.json",
         "../02_候选池冻结证据副本/remote_down_extreme_summary.json"
       ],
-      "freeze_source": "../06_最终上传包/packages/extreme/src/company_pool_runner.py",
+      "freeze_source": "../../01_基础三状态与统一六列运行/packages/extreme/src/company_pool_runner.py",
       "selection_rule": "previously frozen Development+Validation selection; Development threshold",
       "test_used_for_selection": false,
       "runtime_candidate_grid_rebuilt": false
@@ -103,7 +103,7 @@
         "../02_候选池冻结证据副本/FROZEN_V189_logic_freeze.json",
         "../02_候选池冻结证据副本/remote_up_extreme_summary.json"
       ],
-      "freeze_source": "../06_最终上传包/packages/extreme/src/company_pool_runner.py",
+      "freeze_source": "../../01_基础三状态与统一六列运行/packages/extreme/src/company_pool_runner.py",
       "selection_rule": "previously frozen Development+Validation selection; Development threshold",
       "test_used_for_selection": false,
       "runtime_candidate_grid_rebuilt": false
@@ -111,7 +111,7 @@
   },
   "interpretation": {
     "historical_pool_run": "候选池只用于研究阶段在 Development+Validation 上筛选并冻结最终版本。",
-    "current_remote_run": "06_最终上传包只读取现货和本地随包冻结源码/参数，四个信号各自只计算一个冻结候选，不再遍历大候选池。",
+    "current_remote_run": "01_基础三状态与统一六列运行只读取现货和本地随包冻结源码/参数，四个信号各自只计算一个冻结候选，不再遍历大候选池。",
     "important_boundary": "本登记表证明研究候选池与当前冻结参数的对应关系；它不是新的运行入口。"
   }
 }
