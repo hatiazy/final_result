@@ -1,0 +1,29 @@
+{
+  "candidate_id": "base_0621_cov_0.075",
+  "candidate_parameters": {
+    "base_candidate_id": "base_0621",
+    "base_index": 620,
+    "candidate_id": "base_0621_cov_0.075",
+    "core_logic_name": "overnight_daytime_tugwar",
+    "coverage_config": 0.075,
+    "joint_score": 0.30703923097062524,
+    "score_threshold_fitted_development": 0.6832148298881413,
+    "side": "down",
+    "signal_hash_dev_validation": "69d44127e9e9cc2752ed3a72204c85d8b6c57fee",
+    "version": "V156"
+  },
+  "direction_sanity_gate": {
+    "evaluated_on": "Development and Validation only",
+    "min_accuracy": 0.5,
+    "min_excess_over_same_side_baseline": 0.03,
+    "test_used_for_selection": false
+  },
+  "frozen_at_stage": "development_validation",
+  "frozen_first_before_test": true,
+  "selection_data": "company Development+Validation only",
+  "side": "down",
+  "test_metrics_present_at_freeze_time": false,
+  "test_used_for_selection": false,
+  "threshold_fit": "company Development only",
+  "version": "V156"
+}

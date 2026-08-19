@@ -1,0 +1,29 @@
+{
+  "candidate_id": "base_0524_cov_0.095",
+  "candidate_parameters": {
+    "base_candidate_id": "base_0524",
+    "base_index": 523,
+    "candidate_id": "base_0524_cov_0.095",
+    "core_logic_name": "opening_reversal_liquidity",
+    "coverage_config": 0.095,
+    "joint_score": 0.29710055371732497,
+    "score_threshold_fitted_development": 0.6608753605532741,
+    "side": "down",
+    "signal_hash_dev_validation": "2d9b4823a66045b0b5cb1b51fe964b766aa91c08",
+    "version": "V158"
+  },
+  "direction_sanity_gate": {
+    "evaluated_on": "Development and Validation only",
+    "min_accuracy": 0.5,
+    "min_excess_over_same_side_baseline": 0.03,
+    "test_used_for_selection": false
+  },
+  "frozen_at_stage": "development_validation",
+  "frozen_first_before_test": true,
+  "selection_data": "company Development+Validation only",
+  "side": "down",
+  "test_metrics_present_at_freeze_time": false,
+  "test_used_for_selection": false,
+  "threshold_fit": "company Development only",
+  "version": "V158"
+}

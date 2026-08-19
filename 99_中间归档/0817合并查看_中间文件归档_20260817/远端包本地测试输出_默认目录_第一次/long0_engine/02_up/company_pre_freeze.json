@@ -1,0 +1,129 @@
+{
+  "selection_scope": "company_independent_within_side_only_after_post_90_registry",
+  "side": "up",
+  "pool_rule_id": "SPOT_ONLY_FULL_GRID_STRICT_DEV_VAL_FREEZE_THREE_PHASE_TEST_ADMISSION_V1",
+  "candidate_count_input": 6144,
+  "candidate_count_computable": 3960,
+  "selection_policy": "QUALITY_AWARE_FULL_GRID_DEV_VAL_ONLY",
+  "baseline_top_candidate_id": "V57_up_s00_a1_q0.80_c2_H02",
+  "baseline_state_quality_gate_pass": false,
+  "state_quality_gate_candidate_count": 1,
+  "holding_quality_gate_candidate_count": 1,
+  "state_quality_override_applied": true,
+  "state_quality_shortlist_count": 6144,
+  "state_quality_dominator_count": 0,
+  "holding_quality_min_segment_win": 0.55,
+  "minimum_computability": {
+    "development_selected_days": 20,
+    "validation_selected_days": 10
+  },
+  "selected_candidate_preview": {
+    "candidate_id": "V57_up_s01_a1_q0.85_c1_H04",
+    "source_version": "V57",
+    "source_side": "up",
+    "method_key": "rqa",
+    "core_logic_name": "Recurrence Quantification",
+    "score_variant_number": 1,
+    "score_variant": {
+      "embedding_m": 2,
+      "delay": 2,
+      "reserve_variant": 1
+    },
+    "min_zero_age": 1,
+    "entry_quantile": 0.85,
+    "confirmation_days": 1,
+    "holding_package": {
+      "package_id": "H04",
+      "min_hold_days": 5,
+      "max_hold_days": 20,
+      "release_quantile_gap": 0.2,
+      "cooldown_days": 5
+    },
+    "threshold_from_development": 4.671980676328502
+  },
+  "development": {
+    "selected_days": 51,
+    "eligible_days": 877,
+    "coverage": 0.05815279361459521,
+    "mean_directional_o2o_h1": 0.001231070041271562,
+    "mean_directional_o2o_h3": 0.00025200785227550907,
+    "h1_hit_rate": 0.5294117647058824,
+    "rank_ic": 0.02144987042407282,
+    "path_consistency_h1_h3": 0.6666666666666666,
+    "rapid_restore_rate": 0.9215686274509803,
+    "target_transition_rate": 0.058823529411764705,
+    "opposite_transition_rate": 0.0196078431372549,
+    "transition_event_rate": 0.0784313725490196,
+    "transition_purity": 0.75,
+    "eligible_target_transition_rate": 0.021664766248574687,
+    "target_transition_lift_vs_eligible": 0.037158763163190014,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.0012915538036904766
+  },
+  "validation": {
+    "selected_days": 20,
+    "eligible_days": 334,
+    "coverage": 0.059880239520958084,
+    "mean_directional_o2o_h1": 0.004273942329510783,
+    "mean_directional_o2o_h3": 0.005569239095702711,
+    "h1_hit_rate": 0.5,
+    "rank_ic": 0.03470408532050144,
+    "path_consistency_h1_h3": 0.8,
+    "rapid_restore_rate": 0.95,
+    "target_transition_rate": 0.05,
+    "opposite_transition_rate": 0.0,
+    "transition_event_rate": 0.05,
+    "transition_purity": 1.0,
+    "eligible_target_transition_rate": 0.029940119760479042,
+    "target_transition_lift_vs_eligible": 0.02005988023952096,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.0047915904594389965
+  },
+  "state_quality": {
+    "full": {
+      "zero_segment_count": 140,
+      "zero_mean_length": 9.757142857142858,
+      "zero_one_day_share": 0.12857142857142856,
+      "target_daily_mean": 0.0022949964446170065,
+      "target_daily_win": 0.5670731707317073,
+      "target_segment_win": 0.5535714285714286,
+      "target_segment_count": 112,
+      "negative_zero_one_day_share": -0.12857142857142856
+    },
+    "development": {
+      "zero_segment_count": 79,
+      "zero_mean_length": 10.556962025316455,
+      "zero_one_day_share": 0.13924050632911392,
+      "target_daily_mean": 0.001968469263080074,
+      "target_daily_win": 0.5803921568627451,
+      "target_segment_win": 0.546875,
+      "target_segment_count": 64,
+      "negative_zero_one_day_share": -0.13924050632911392
+    },
+    "validation": {
+      "zero_segment_count": 37,
+      "zero_mean_length": 8.756756756756756,
+      "zero_one_day_share": 0.10810810810810811,
+      "target_daily_mean": 0.0032350628117903527,
+      "target_daily_win": 0.514018691588785,
+      "target_segment_win": 0.5357142857142857,
+      "target_segment_count": 28,
+      "negative_zero_one_day_share": -0.10810810810810811
+    },
+    "test": {
+      "zero_segment_count": 26,
+      "zero_mean_length": 8.807692307692308,
+      "zero_one_day_share": 0.11538461538461539,
+      "target_daily_mean": 0.0021617451369583133,
+      "target_daily_win": 0.5846153846153846,
+      "target_segment_win": 0.6,
+      "target_segment_count": 20,
+      "negative_zero_one_day_share": -0.11538461538461539
+    }
+  },
+  "top20_file": "company_top20.csv",
+  "logic_top1_file": "company_logic_top1.csv",
+  "logic_count": 1,
+  "test_locked_until_after_freeze": true,
+  "test_used_for_selection": false
+}

@@ -1,0 +1,33 @@
+{
+  "package": "远端九列重建上传包_20260817",
+  "purpose": "在远端仅使用现货和远端三状态路径重建两侧最终五列、合并九列，并在Notebook最后输出逐日一致性审计",
+  "main_notebook": "01_远端重建九列并逐日审计.ipynb",
+  "script_entry": "remote_rebuild.py",
+  "external_inputs": [
+    "COMPANY_SPOT_PATH",
+    "REMOTE_THREE_STATE_PATH"
+  ],
+  "default_external_paths": {
+    "COMPANY_SPOT_PATH": "/home/hzy/cta/IC数据更新*最终固化版/现货最终版/CSI500_SPOT_md_eod_raw*最终版.parquet",
+    "REMOTE_THREE_STATE_PATH": "/home/hzy/cta/三状态冻结/IC_1545_three_state_and_downside_warning.csv"
+  },
+  "audit_attachments": [
+    "reference/本地1545五列参考结果.csv",
+    "reference/本地长0五列参考结果.csv",
+    "reference/本地九列参考结果.csv"
+  ],
+  "audit_attachment_policy": "两个远端冻结引擎完成前不读取或展示；最后审计阶段逐列比较",
+  "bundled_engine_sources": [
+    "vendor/1545/src",
+    "vendor/长0/src"
+  ],
+  "local_smoke_test": {
+    "rows": 2091,
+    "state_checks_exact": true,
+    "local_1545_five_exact": true,
+    "local_long0_five_exact": true,
+    "local_nine_exact": true,
+    "final_status": "PASS"
+  },
+  "test_used_for_selection": false
+}

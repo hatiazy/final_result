@@ -1,0 +1,30 @@
+{
+  "package_type": "spot_only_upload_package",
+  "state_recipe": "v5.51_IC_eight_spot_state_frozen_recipes",
+  "pool_rule_id": "SIDE_TOP1_DV_NONDEGENERATE_FULL_GRID_SYNTHESIS_EVENT_DAY_V7",
+  "pool_version_sides": {
+    "minus": [
+      "V04",
+      "V49",
+      "V50",
+      "V55",
+      "V57",
+      "V76"
+    ],
+    "plus": [
+      "V49",
+      "V70",
+      "V80"
+    ]
+  },
+  "raw_candidates_by_side": {
+    "minus": 15552,
+    "plus": 7776
+  },
+  "test_used_for_company_freeze": false,
+  "contains_local_freeze_parameters": false,
+  "contains_local_results": false,
+  "external_futures_or_nine_state_input": false,
+  "final_state_policy": "event-day only: an exit signal sets corresponding state to 0 on that date; later dates restore base state",
+  "post_freeze_quality_audit": "segment win rate, direction-aligned and raw-index segment return tails, and one-day fragments are descriptive checks only; no result feeds candidate/pool filtering"
+}

@@ -1,0 +1,87 @@
+{
+  "package": "05_上传包_非零退出与大涨大跌远端验证",
+  "spot_path": "/Users/hzy/Desktop/0817合并查看/05_上传包/data/local_smoke/CSI500_SPOT_000905_XSHG_20070115_20260817_audited_pure_spot_fixture.parquet",
+  "spot_source_kind": "local_smoke_fallback",
+  "remote_three_state_path": "/Users/hzy/Desktop/0817合并查看/05_上传包/expected/local_smoke/本地三状态基准.csv",
+  "expected_reference_root": "/Users/hzy/Desktop/0817合并查看/05_上传包/expected/local_smoke",
+  "output_dir": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs",
+  "engine_input_policy": "两个引擎只读取现货文件；三状态文件仅在引擎结束后作为逐日审计基准读取。",
+  "generated_files": {
+    "nonzero": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/remote_nonzero_five_columns.csv",
+    "nonzero_compare": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/非零五列逐日对比.csv",
+    "state_compare": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/三状态逐日对比.csv",
+    "extreme_down": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/remote_down_extreme_daily.csv",
+    "extreme_up": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/remote_up_extreme_daily.csv",
+    "extreme_down_compare": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/大涨大跌_down_逐日对比.csv",
+    "extreme_up_compare": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/大涨大跌_up_逐日对比.csv",
+    "execution_summary": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/最终执行日简表.csv"
+  },
+  "nonzero_audit": {
+    "label": "远端非零五列 vs 本地参考",
+    "generated_rows": 2092,
+    "local_rows": 2092,
+    "common_rows": 2092,
+    "generated_only_rows": 0,
+    "local_only_rows": 0,
+    "mismatch_rows_on_common_dates": 0,
+    "no_date_or_value_difference": true
+  },
+  "state_audit": {
+    "baseline_path": "/Users/hzy/Desktop/0817合并查看/05_上传包/expected/local_smoke/本地三状态基准.csv",
+    "baseline_source_kind": "local_smoke_fallback",
+    "generated_rows": 2092,
+    "baseline_rows": 2092,
+    "common_rows": 2092,
+    "generated_only_rows": 0,
+    "baseline_only_rows": 0,
+    "mismatch_rows_on_common_dates": 0,
+    "no_date_or_value_difference": true
+  },
+  "extreme_audits": {
+    "down": {
+      "label": "远端down侧 vs 本地参考",
+      "generated_rows": 2090,
+      "local_rows": 2090,
+      "common_rows": 2090,
+      "generated_only_rows": 0,
+      "local_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "no_date_or_value_difference": true
+    },
+    "up": {
+      "label": "远端up侧 vs 本地参考",
+      "generated_rows": 2090,
+      "local_rows": 2090,
+      "common_rows": 2090,
+      "generated_only_rows": 0,
+      "local_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "no_date_or_value_difference": true
+    }
+  },
+  "execution_summary": {
+    "path": "/Users/hzy/Desktop/0817合并查看/05_上传包/runtime_outputs/最终执行日简表.csv",
+    "columns": [
+      "实际执行日",
+      "三状态",
+      "+1反转",
+      "-1反转",
+      "大涨",
+      "大跌"
+    ],
+    "rows": 2092,
+    "date_min": "2018-01-03",
+    "date_max": "2026-08-18",
+    "nonzero_plus_reversal_days": 62,
+    "nonzero_minus_reversal_days": 45,
+    "big_up_prediction_days": 113,
+    "big_down_prediction_days": 144,
+    "mapped_prediction_counts": {
+      "大涨": 113,
+      "大跌": 144
+    },
+    "valid": true,
+    "meaning": "非零退出信号沿用有效执行日；大涨/大跌由形成日预测映射到下一实际现货交易日。所有信号列为0/1。"
+  },
+  "success": true
+}

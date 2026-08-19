@@ -1,0 +1,91 @@
+{
+  "1545": {
+    "original_vs_integrated_local_run": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/本地三方直接比较_20260817/原始1545五列.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/远端包本地测试输出3/remote_1545_five_columns.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    },
+    "original_vs_integrated_reference_attachment": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/本地三方直接比较_20260817/原始1545五列.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看/01_报告资料与基础上传包/基础上传包_远端九列重建/reference/本地1545五列参考结果.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    },
+    "integrated_local_run_vs_reference_attachment": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/远端包本地测试输出3/remote_1545_five_columns.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看/01_报告资料与基础上传包/基础上传包_远端九列重建/reference/本地1545五列参考结果.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    }
+  },
+  "long0": {
+    "original_vs_integrated_local_run": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/本地三方直接比较_20260817/原始长0五列.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/远端包本地测试输出3/remote_long0_five_columns.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    },
+    "original_vs_integrated_reference_attachment": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/本地三方直接比较_20260817/原始长0五列.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看/01_报告资料与基础上传包/基础上传包_远端九列重建/reference/本地长0五列参考结果.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    },
+    "integrated_local_run_vs_reference_attachment": {
+      "left": "/Users/hzy/Desktop/0817合并查看_中间文件归档_20260817/远端包本地测试输出3/remote_long0_five_columns.csv",
+      "right": "/Users/hzy/Desktop/0817合并查看/01_报告资料与基础上传包/基础上传包_远端九列重建/reference/本地长0五列参考结果.csv",
+      "left_rows": 2091,
+      "right_rows": 2091,
+      "common_rows": 2091,
+      "left_only_rows": 0,
+      "right_only_rows": 0,
+      "mismatch_rows_on_common_dates": 0,
+      "mismatch_columns": [],
+      "exact": true,
+      "date_min": "2018-01-03",
+      "date_max": "2026-08-17"
+    }
+  },
+  "all_exact": true
+}

@@ -1,0 +1,13 @@
+{
+  "selection_scope": "frozen_local_top1_entry_path_diagnostic_only",
+  "side": "up",
+  "logic_count": 1,
+  "pair_count": 0,
+  "test_used_for_selection": false,
+  "official_global_top1_unchanged": false,
+  "heuristic_high_overlap_jaccard_threshold": 0.5,
+  "heuristic_high_overlap_pair_count": 0,
+  "max_jaccard_overlap": null,
+  "csv_file": "company_logic_signal_overlap.csv",
+  "rows": []
+}

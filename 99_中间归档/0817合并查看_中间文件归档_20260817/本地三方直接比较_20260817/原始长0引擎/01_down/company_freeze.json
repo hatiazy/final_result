@@ -1,0 +1,228 @@
+{
+  "selection_scope": "company_independent_within_side_only_after_post_90_registry",
+  "side": "down",
+  "pool_rule_id": "SPOT_ONLY_FULL_GRID_STRICT_DEV_VAL_FREEZE_THREE_PHASE_TEST_ADMISSION_V1",
+  "admitted_source_versions": [
+    "V38"
+  ],
+  "candidate_id": "V38_down_s01_a1_q0.85_c1_H03",
+  "selection_policy": "QUALITY_AWARE_FULL_GRID_DEV_VAL_ONLY",
+  "baseline_top_candidate_id": "V38_down_s03_a3_q0.85_c1_H04",
+  "baseline_state_quality_gate_pass": false,
+  "state_quality_gate_candidate_count": 6,
+  "holding_quality_gate_candidate_count": 6,
+  "state_quality_override_applied": true,
+  "state_quality_shortlist_count": 6144,
+  "state_quality_dominator_count": 0,
+  "holding_quality_min_segment_win": 0.55,
+  "source_version": "V38",
+  "source_side": "down",
+  "core_logic_name": "成交量趋势突破确认",
+  "method_key": "volume_breakout",
+  "score_variant_number": 1,
+  "score_variant": {
+    "window": 4,
+    "direction_or_recovery_lag": 1
+  },
+  "min_zero_age": 1,
+  "entry_quantile": 0.85,
+  "confirmation_days": 1,
+  "holding_package": {
+    "package_id": "H03",
+    "min_hold_days": 3,
+    "max_hold_days": 10,
+    "release_quantile_gap": 0.15,
+    "cooldown_days": 3
+  },
+  "threshold_from_development": 1.2294466376933055,
+  "candidate_count_input": 6144,
+  "candidate_count_computable": 3714,
+  "development": {
+    "selected_days": 90,
+    "eligible_days": 877,
+    "coverage": 0.10262257696693272,
+    "mean_directional_o2o_h1": 0.0022690408499071706,
+    "mean_directional_o2o_h3": 0.004350059259201027,
+    "h1_hit_rate": 0.5555555555555556,
+    "rank_ic": 0.22038111701033047,
+    "path_consistency_h1_h3": 0.6666666666666666,
+    "rapid_restore_rate": 0.9333333333333333,
+    "target_transition_rate": 0.06666666666666667,
+    "opposite_transition_rate": 0.0,
+    "transition_event_rate": 0.06666666666666667,
+    "transition_purity": 1.0,
+    "eligible_target_transition_rate": 0.02508551881413911,
+    "target_transition_lift_vs_eligible": 0.041581147852527554,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.002208557087488256
+  },
+  "validation": {
+    "selected_days": 25,
+    "eligible_days": 334,
+    "coverage": 0.0748502994011976,
+    "mean_directional_o2o_h1": 0.0013297651090332253,
+    "mean_directional_o2o_h3": 0.0019566449125358386,
+    "h1_hit_rate": 0.56,
+    "rank_ic": 0.025384615384615387,
+    "path_consistency_h1_h3": 0.76,
+    "rapid_restore_rate": 0.92,
+    "target_transition_rate": 0.08,
+    "opposite_transition_rate": 0.0,
+    "transition_event_rate": 0.08,
+    "transition_purity": 1.0,
+    "eligible_target_transition_rate": 0.029940119760479042,
+    "target_transition_lift_vs_eligible": 0.05005988023952096,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.000812116979105011
+  },
+  "state_quality": {
+    "full": {
+      "zero_segment_count": 188,
+      "zero_mean_length": 7.0,
+      "zero_one_day_share": 0.09042553191489362,
+      "target_daily_mean": 0.002285100801212644,
+      "target_daily_win": 0.5284552845528455,
+      "target_segment_win": 0.5679012345679012,
+      "target_segment_count": 162,
+      "negative_zero_one_day_share": -0.09042553191489362
+    },
+    "development": {
+      "zero_segment_count": 116,
+      "zero_mean_length": 6.853448275862069,
+      "zero_one_day_share": 0.11206896551724138,
+      "target_daily_mean": 0.00233272728042675,
+      "target_daily_win": 0.5223214285714286,
+      "target_segment_win": 0.5728155339805825,
+      "target_segment_count": 103,
+      "negative_zero_one_day_share": -0.11206896551724138
+    },
+    "validation": {
+      "zero_segment_count": 42,
+      "zero_mean_length": 7.666666666666667,
+      "zero_one_day_share": 0.07142857142857142,
+      "target_daily_mean": 0.0014182006198299292,
+      "target_daily_win": 0.5568181818181818,
+      "target_segment_win": 0.5454545454545454,
+      "target_segment_count": 33,
+      "negative_zero_one_day_share": -0.07142857142857142
+    },
+    "test": {
+      "zero_segment_count": 32,
+      "zero_mean_length": 7.09375,
+      "zero_one_day_share": 0.03125,
+      "target_daily_mean": 0.003436309303277893,
+      "target_daily_win": 0.5087719298245614,
+      "target_segment_win": 0.5769230769230769,
+      "target_segment_count": 26,
+      "negative_zero_one_day_share": -0.03125
+    }
+  },
+  "holding_quality": {
+    "full": {
+      "holding_days": 330,
+      "segment_count": 136,
+      "mean_length": 2.426470588235294,
+      "one_day_share": 0.0,
+      "mean_segment_directional_return": 0.003884965616195609,
+      "segment_win_rate": 0.5882352941176471,
+      "daily_mean_directional_return": NaN,
+      "daily_win_rate": 0.5333333333333333
+    },
+    "development": {
+      "holding_days": 222,
+      "segment_count": 90,
+      "mean_length": 2.466666666666667,
+      "one_day_share": 0.0,
+      "mean_segment_directional_return": 0.0031911500430088636,
+      "segment_win_rate": 0.5777777777777777,
+      "daily_mean_directional_return": 0.0013022422282365639,
+      "daily_win_rate": 0.5225225225225225
+    },
+    "validation": {
+      "holding_days": 55,
+      "segment_count": 25,
+      "mean_length": 2.2,
+      "one_day_share": 0.0,
+      "mean_segment_directional_return": 0.0027412755928981803,
+      "segment_win_rate": 0.6,
+      "daily_mean_directional_return": 0.0012581213780222084,
+      "daily_win_rate": 0.5818181818181818
+    },
+    "test": {
+      "holding_days": 53,
+      "segment_count": 21,
+      "mean_length": 2.5238095238095237,
+      "one_day_share": 0.0,
+      "mean_segment_directional_return": 0.008219996671873838,
+      "segment_win_rate": 0.6190476190476191,
+      "daily_mean_directional_return": NaN,
+      "daily_win_rate": 0.5283018867924528
+    }
+  },
+  "full": {
+    "selected_days": 136,
+    "eligible_days": 1450,
+    "coverage": 0.09379310344827586,
+    "mean_directional_o2o_h1": 0.0027428764334792815,
+    "mean_directional_o2o_h3": 0.0048825432606427275,
+    "h1_hit_rate": 0.5588235294117647,
+    "rank_ic": 0.21024283192595772,
+    "path_consistency_h1_h3": 0.6911764705882353,
+    "rapid_restore_rate": 0.9338235294117647,
+    "target_transition_rate": 0.0661764705882353,
+    "opposite_transition_rate": 0.0,
+    "transition_event_rate": 0.0661764705882353,
+    "transition_purity": 1.0,
+    "eligible_target_transition_rate": 0.02620689655172414,
+    "target_transition_lift_vs_eligible": 0.039969574036511156,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.0027244761602908357
+  },
+  "test": {
+    "selected_days": 21,
+    "eligible_days": 239,
+    "coverage": 0.08786610878661087,
+    "mean_directional_o2o_h1": 0.006455875749319347,
+    "mean_directional_o2o_h3": 0.010647829871710599,
+    "h1_hit_rate": 0.5714285714285714,
+    "rank_ic": 0.32987012987012987,
+    "path_consistency_h1_h3": 0.7142857142857143,
+    "rapid_restore_rate": 0.9523809523809523,
+    "target_transition_rate": 0.047619047619047616,
+    "opposite_transition_rate": 0.0,
+    "transition_event_rate": 0.047619047619047616,
+    "transition_purity": 1.0,
+    "eligible_target_transition_rate": 0.02510460251046025,
+    "target_transition_lift_vs_eligible": 0.022514445108587366,
+    "test_used_for_selection": false,
+    "improvement_vs_all_eligible_zero": 0.007289592648541796
+  },
+  "phase_dates": {
+    "full": {
+      "start": "2018-01-02",
+      "end": "2026-08-14"
+    },
+    "development": {
+      "start": "2018-01-02",
+      "end": "2022-12-30"
+    },
+    "validation": {
+      "start": "2023-01-03",
+      "end": "2024-12-31"
+    },
+    "test": {
+      "start": "2025-01-02",
+      "end": "2026-08-14"
+    }
+  },
+  "test_used_for_selection": false,
+  "pre_freeze_summary_file": "company_pre_freeze.json",
+  "top20_file": "company_top20.csv",
+  "logic_top1_file": "company_logic_top1.csv",
+  "logic_top1_json_file": "company_logic_top1.json",
+  "logic_signal_overlap_file": "company_logic_signal_overlap.csv",
+  "logic_signal_overlap_json_file": "company_logic_signal_overlap.json",
+  "logic_count": 1,
+  "state_adjustment_diagnostics_file": "company_state_adjustment_diagnostics.json",
+  "state_adjustment_pair_complete": true
+}
