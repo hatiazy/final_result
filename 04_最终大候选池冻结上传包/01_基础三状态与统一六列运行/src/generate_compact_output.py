@@ -192,6 +192,8 @@ def build_compact_summary(spot_path: Path, output_dir: Path) -> dict[str, Any]:
             # file.  Keep the same next-weekday display convention as the
             # nonzero exporter until the next actual spot row arrives.
             mapped_dates.loc[pending] = pending_formations + pd.offsets.BDay(1)
+        if not np.all(pd.to_datetime(mapped_dates).to_numpy() > extreme["date"].to_numpy()):
+            raise ValueError(f"{label}存在未向后移位的信号日期，拒绝生成六列表")
         mapped = pd.DataFrame({
             "实际执行日": mapped_dates,
             label: extreme["predicted"].astype("int8"),

@@ -70,6 +70,16 @@ def _event_exit_state(
     return pd.Series(output, index=state.index, dtype="int8")
 
 
+def _assert_single_forward_shift(panel: pd.DataFrame, effective_date: pd.Series) -> None:
+    """Fail closed if any signal is not placed strictly after its formation close."""
+    effective = pd.to_datetime(effective_date, errors="coerce")
+    formation = pd.DatetimeIndex(pd.to_datetime(panel.index, errors="coerce"))
+    if effective.isna().any() or formation.isna().any() or len(effective) != len(formation):
+        raise RuntimeError("信号执行日映射存在无效日期")
+    if not np.all(effective.to_numpy() > formation.to_numpy()):
+        raise RuntimeError("信号执行日不是形成日之后的下一执行日，拒绝输出")
+
+
 def _build_candidate_pool_signal_export(
     *,
     progress: Callable[[str], None] | None = None,
@@ -121,6 +131,7 @@ def _build_candidate_pool_signal_export(
         effective_date.loc[pending_dates[0]] = (
             pd.Timestamp(pending_dates[0]) + pd.offsets.BDay(1)
         )
+    _assert_single_forward_shift(panel, effective_date)
     output = pd.DataFrame(
         {
             "date": effective_date,
@@ -225,6 +236,7 @@ def build_frozen_signal_export(
         if len(pending_dates) != 1 or pending_dates[-1] != panel.index[-1]:
             raise RuntimeError("导出层只允许最后一条形成日缺少 t+1 effective_date")
         effective_date.loc[pending_dates[0]] = pd.Timestamp(pending_dates[0]) + pd.offsets.BDay(1)
+    _assert_single_forward_shift(panel, effective_date)
     output = pd.DataFrame({
         "date": effective_date,
         "three_state": panel["base_state"].astype("int8"),
