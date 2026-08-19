@@ -59,21 +59,15 @@ def main() -> None:
     if result.get("status") != "COMPLETED":
         raise RuntimeError(f"{args.side} 侧没有完成冻结: {result.get('status')}")
 
-    plot = pd.DataFrame(result["periods"]["plot_data"])
-    required = ["date", "close", "score", "predicted", "actual_extreme", "correct", "direction_correct", "o2o_bp", "signed_o2o_bp", "phase"]
-    missing = sorted(set(required) - set(plot.columns))
-    if missing:
-        raise ValueError(f"{args.side} 侧逐日结果缺少列: {missing}")
-    daily = plot.loc[:, required].copy()
-    daily["predicted"] = daily["predicted"].astype(int)
-    daily["actual_extreme"] = daily["actual_extreme"].astype(int)
-    daily["correct"] = daily["correct"].astype(int)
-    daily["direction_correct"] = daily["direction_correct"].astype(int)
-    daily.to_csv(args.output / f"remote_{args.side}_extreme_daily.csv", index=False, encoding="utf-8-sig")
+    # The historical evaluation file is intentionally not exported by the
+    # runtime package.  It ends at the last formation date with a realized
+    # O2O label, which is earlier than the latest usable signal and is easy to
+    # mistake for the runtime feed.  Remove a stale copy from older runs if it
+    # exists, and retain only the latest formation-date predictions below.
+    legacy_daily = args.output / f"remote_{args.side}_extreme_daily.csv"
+    if legacy_daily.exists():
+        legacy_daily.unlink()
 
-    # The historical daily file is intentionally limited to rows with a
-    # realized O2O label.  The runtime feed must also contain the latest
-    # unlabelled prediction, because that is the signal for the next open.
     prediction = pd.DataFrame(result["periods"]["prediction_data"])
     prediction_required = ["date", "score", "predicted", "phase"]
     missing_prediction = sorted(set(prediction_required) - set(prediction.columns))
@@ -101,9 +95,6 @@ def main() -> None:
             for key, value in result.get("periods", {}).items()
             if key not in {"plot_data", "prediction_data"}
         },
-        "daily_rows": int(len(daily)),
-        "daily_date_min": str(daily["date"].min()) if len(daily) else None,
-        "daily_date_max": str(daily["date"].max()) if len(daily) else None,
         "prediction_rows": int(len(prediction)),
         "prediction_date_min": str(prediction["date"].min()) if len(prediction) else None,
         "prediction_date_max": str(prediction["date"].max()) if len(prediction) else None,
@@ -113,8 +104,8 @@ def main() -> None:
         json.dumps(summary, ensure_ascii=False, indent=2, default=_json_default) + "\n",
         encoding="utf-8",
     )
-    print(f"[大涨大跌-{args.side}] output={args.output / f'remote_{args.side}_extreme_daily.csv'}", flush=True)
-    print(f"[大涨大跌-{args.side}] rows={len(daily)} date={summary['daily_date_min']} -> {summary['daily_date_max']}", flush=True)
+    print(f"[大涨大跌-{args.side}] prediction_output={args.output / f'remote_{args.side}_extreme_predictions.csv'}", flush=True)
+    print(f"[大涨大跌-{args.side}] formation_rows={len(prediction)} formation_date={summary['prediction_date_min']} -> {summary['prediction_date_max']}", flush=True)
 
 
 if __name__ == "__main__":
