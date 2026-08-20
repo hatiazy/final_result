@@ -142,6 +142,18 @@ def load_spot_panel(path: str | Path) -> tuple[pd.DataFrame, pd.DataFrame, dict[
     if (frame[["open", "high", "low", "close"]] <= 0).any().any():
         raise ValueError("spot prices must be strictly positive")
     full_frame = frame.copy()
+    # Keep the canonical output columns available even for the local smoke
+    # fixtures, which intentionally contain only date + OHLCV/amount.  The
+    # production remote file already carries these metadata columns, but the
+    # loader must not fail merely because they are optional in the contract.
+    if "prev_close" not in full_frame.columns:
+        full_frame["prev_close"] = full_frame["close"].shift(1)
+    else:
+        full_frame["prev_close"] = pd.to_numeric(full_frame["prev_close"], errors="coerce")
+    if "trade_dt" not in full_frame.columns:
+        full_frame["trade_dt"] = full_frame["date"].dt.strftime("%Y%m%d").astype(int)
+    if "index_code" not in full_frame.columns:
+        full_frame["index_code"] = "company_spot"
     state_frame, state_audit = build_spot_eight_state_panel(frame)
     state_dates = pd.DatetimeIndex(state_frame["formation_date"])
     if not state_dates.isin(pd.DatetimeIndex(full_frame["date"])).all():
