@@ -1,0 +1,1163 @@
+{
+  "config_version": "v5.51_IC_eight_spot_state_frozen_recipes",
+  "state_count": 8,
+  "excluded_state": "成交流动性状态",
+  "recipes": [
+    {
+      "state": "位置修复状态",
+      "variant": "v4_equal_top3",
+      "family_value_stage": "company_baseline",
+      "families": [
+        "recovery_slope_vol_adjusted",
+        "donchian_position",
+        "stochastic_position"
+      ],
+      "features": [
+        {
+          "family": "donchian_position",
+          "params": {
+            "window": 135
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "donchian_position",
+          "params": {
+            "window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "donchian_position",
+          "params": {
+            "window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "recovery_slope_vol_adjusted",
+          "params": {
+            "vol_window": 30,
+            "window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "recovery_slope_vol_adjusted",
+          "params": {
+            "vol_window": 30,
+            "window": 45
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "recovery_slope_vol_adjusted",
+          "params": {
+            "vol_window": 40,
+            "window": 45
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 10
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 120
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "反转压力状态",
+      "variant": "strict_reversal_train_top4",
+      "family_value_stage": "v55",
+      "families": [
+        "distance_from_ma",
+        "momentum",
+        "price_volume_divergence",
+        "high_position_rejection_v55"
+      ],
+      "features": [
+        {
+          "family": "distance_from_ma",
+          "params": {
+            "ma_window": 120
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "distance_from_ma",
+          "params": {
+            "ma_window": 180
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "distance_from_ma",
+          "params": {
+            "ma_window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 70
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 40
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 80
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "price_volume_divergence",
+          "params": {
+            "momentum_window": 10,
+            "volume_window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "price_volume_divergence",
+          "params": {
+            "momentum_window": 30,
+            "volume_window": 20
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "price_volume_divergence",
+          "params": {
+            "momentum_window": 13,
+            "volume_window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "high_position_rejection_v55",
+          "params": {
+            "background": 90,
+            "trigger": 3
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "high_position_rejection_v55",
+          "params": {
+            "background": 90,
+            "trigger": 5
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "high_position_rejection_v55",
+          "params": {
+            "background": 60,
+            "trigger": 3
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "尾部压力/波动切换状态",
+      "variant": "v4_equal_top4",
+      "family_value_stage": "company_baseline",
+      "families": [
+        "left_tail_loss_ratio",
+        "range_vol_ratio",
+        "worst_k_loss",
+        "high_vol_negative_trend"
+      ],
+      "features": [
+        {
+          "family": "high_vol_negative_trend",
+          "params": {
+            "long_vol_window": 90,
+            "short_vol_window": 5,
+            "trend_window": 5
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "high_vol_negative_trend",
+          "params": {
+            "long_vol_window": 60,
+            "short_vol_window": 13,
+            "trend_window": 5
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "high_vol_negative_trend",
+          "params": {
+            "long_vol_window": 40,
+            "short_vol_window": 13,
+            "trend_window": 8
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "left_tail_loss_ratio",
+          "params": {
+            "k": 8,
+            "window": 70
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "left_tail_loss_ratio",
+          "params": {
+            "k": 10,
+            "window": 70
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "left_tail_loss_ratio",
+          "params": {
+            "k": 20,
+            "window": 70
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "range_vol_ratio",
+          "params": {
+            "long_window": 180,
+            "short_window": 5
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "range_vol_ratio",
+          "params": {
+            "long_window": 150,
+            "short_window": 5
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "range_vol_ratio",
+          "params": {
+            "long_window": 90,
+            "short_window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "worst_k_loss",
+          "params": {
+            "k": 3,
+            "window": 120
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        },
+        {
+          "family": "worst_k_loss",
+          "params": {
+            "k": 3,
+            "window": 110
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        },
+        {
+          "family": "worst_k_loss",
+          "params": {
+            "k": 3,
+            "window": 100
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        }
+      ]
+    },
+    {
+      "state": "趋势状态",
+      "variant": "pure_direction_enumerated3_009_v525",
+      "family_value_stage": "v548",
+      "families": [
+        "higher_high_lower_low_balance_v59",
+        "median_price_slope_direction_v59",
+        "short_return_direction_v513"
+      ],
+      "features": [
+        {
+          "family": "higher_high_lower_low_balance_v59",
+          "params": {
+            "window": 20
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "higher_high_lower_low_balance_v59",
+          "params": {
+            "window": 15
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "higher_high_lower_low_balance_v59",
+          "params": {
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "median_price_slope_direction_v59",
+          "params": {
+            "lag": 5,
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "median_price_slope_direction_v59",
+          "params": {
+            "lag": 10,
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "median_price_slope_direction_v59",
+          "params": {
+            "lag": 3,
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "short_return_direction_v513",
+          "params": {
+            "window": 8
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "short_return_direction_v513",
+          "params": {
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "short_return_direction_v513",
+          "params": {
+            "window": 3
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "路径脆弱状态",
+      "variant": "v4_equal_top3",
+      "family_value_stage": "company_baseline",
+      "families": [
+        "choppiness_index",
+        "drawdown_acceleration_down",
+        "drawdown_recovery_gap"
+      ],
+      "features": [
+        {
+          "family": "choppiness_index",
+          "params": {
+            "window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "choppiness_index",
+          "params": {
+            "window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "choppiness_index",
+          "params": {
+            "window": 40
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_acceleration_down",
+          "params": {
+            "delta": 1,
+            "drawdown_window": 90,
+            "trend_window": 8
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_acceleration_down",
+          "params": {
+            "delta": 1,
+            "drawdown_window": 120,
+            "trend_window": 8
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_acceleration_down",
+          "params": {
+            "delta": 1,
+            "drawdown_window": 40,
+            "trend_window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_recovery_gap",
+          "params": {
+            "window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_recovery_gap",
+          "params": {
+            "window": 120
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "drawdown_recovery_gap",
+          "params": {
+            "window": 150
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "跳空/日内承接状态",
+      "variant": "intraday_enumerated3_001_v525",
+      "family_value_stage": "v534",
+      "families": [
+        "gap_close_alignment",
+        "intraday_return",
+        "gap_return"
+      ],
+      "features": [
+        {
+          "family": "gap_close_alignment",
+          "params": {
+            "window": 10
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gap_close_alignment",
+          "params": {
+            "window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gap_close_alignment",
+          "params": {
+            "window": 1
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gap_return",
+          "params": {
+            "window": 3
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gap_return",
+          "params": {
+            "window": 60
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gap_return",
+          "params": {
+            "window": 30
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "intraday_return",
+          "params": {
+            "window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "intraday_return",
+          "params": {
+            "window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "intraday_return",
+          "params": {
+            "window": 10
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "过热状态",
+      "variant": "five_mechanism_alt_位置",
+      "family_value_stage": "company_baseline",
+      "families": [
+        "stochastic_position",
+        "momentum",
+        "rsi_pressure",
+        "gain_concentration",
+        "up_volume_exhaustion"
+      ],
+      "features": [
+        {
+          "family": "gain_concentration",
+          "params": {
+            "k": 8,
+            "window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gain_concentration",
+          "params": {
+            "k": 10,
+            "window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "gain_concentration",
+          "params": {
+            "k": 10,
+            "window": 120
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 180
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 45
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "momentum",
+          "params": {
+            "window": 50
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "rsi_pressure",
+          "params": {
+            "window": 40
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "rsi_pressure",
+          "params": {
+            "window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "rsi_pressure",
+          "params": {
+            "window": 30
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 120
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "stochastic_position",
+          "params": {
+            "window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "up_volume_exhaustion",
+          "params": {
+            "return_window": 60,
+            "volume_window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "up_volume_exhaustion",
+          "params": {
+            "return_window": 40,
+            "volume_window": 60
+          },
+          "transform": "rolling_zscore",
+          "window": 120,
+          "min_periods": 60,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "up_volume_exhaustion",
+          "params": {
+            "return_window": 40,
+            "volume_window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    },
+    {
+      "state": "量价状态",
+      "variant": "signed_mechanism_top3",
+      "family_value_stage": "company_baseline",
+      "families": [
+        "price_volume_trend_agreement",
+        "down_volume_pressure",
+        "volume_return_confirm"
+      ],
+      "features": [
+        {
+          "family": "down_volume_pressure",
+          "params": {
+            "return_window": 8,
+            "volume_window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        },
+        {
+          "family": "down_volume_pressure",
+          "params": {
+            "return_window": 8,
+            "volume_window": 90
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        },
+        {
+          "family": "down_volume_pressure",
+          "params": {
+            "return_window": 60,
+            "volume_window": 20
+          },
+          "transform": "raw",
+          "window": null,
+          "min_periods": null,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": -1.0
+        },
+        {
+          "family": "price_volume_trend_agreement",
+          "params": {
+            "price_window": 10,
+            "volume_window": 10
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "price_volume_trend_agreement",
+          "params": {
+            "price_window": 10,
+            "volume_window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "price_volume_trend_agreement",
+          "params": {
+            "price_window": 20,
+            "volume_window": 10
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "volume_return_confirm",
+          "params": {
+            "return_window": 3,
+            "volume_window": 8
+          },
+          "transform": "rolling_zscore",
+          "window": 40,
+          "min_periods": 20,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "volume_return_confirm",
+          "params": {
+            "return_window": 3,
+            "volume_window": 20
+          },
+          "transform": "rolling_zscore",
+          "window": 90,
+          "min_periods": 45,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        },
+        {
+          "family": "volume_return_confirm",
+          "params": {
+            "return_window": 3,
+            "volume_window": 30
+          },
+          "transform": "rolling_zscore",
+          "window": 60,
+          "min_periods": 30,
+          "lag": 1,
+          "clip": 5.0,
+          "direction": 1.0
+        }
+      ]
+    }
+  ]
+}
