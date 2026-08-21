@@ -1,0 +1,120 @@
+# Git 常用操作速查
+
+以下命令请在仓库目录中执行。尖括号中的内容需要替换成自己的实际值。
+
+## 一、获取仓库
+
+```bash
+# 克隆仓库
+git clone <仓库地址>
+
+# 克隆指定分支
+git clone -b <分支名> <仓库地址>
+```
+
+## 二、查看信息
+
+```bash
+# 查看当前工作区状态
+git status
+
+# 查看本地和远程分支
+git branch
+git branch -a
+
+# 查看远程仓库地址
+git remote -v
+
+# 查看提交记录
+git log --oneline --graph --decorate -n 10
+
+# 查看未提交的修改
+git diff
+git diff --staged
+```
+
+## 三、提交本地修改
+
+```bash
+# 将指定文件加入暂存区
+git add <文件名>
+
+# 将当前目录下的修改加入暂存区
+git add .
+
+# 提交暂存区内容
+git commit -m "说明本次修改"
+```
+
+## 四、拉取远程更新
+
+```bash
+# 拉取并合并远程 main 分支
+git pull origin main
+
+# 拉取并使用 rebase 更新当前分支
+git pull --rebase origin main
+
+# 只获取远程更新，不合并到当前分支
+git fetch origin
+```
+
+## 五、推送本地提交
+
+```bash
+# 推送当前 main 分支
+git push origin main
+
+# 首次推送新分支，并建立上游关联
+git push -u origin <分支名>
+
+# 后续推送已建立上游关联的分支
+git push
+```
+
+## 六、分支操作
+
+```bash
+# 创建并切换到新分支
+git switch -c <分支名>
+
+# 切换分支
+git switch <分支名>
+
+# 删除已合并的本地分支
+git branch -d <分支名>
+```
+
+## 七、暂存和撤销
+
+```bash
+# 暂存当前修改
+git stash
+
+# 查看暂存列表
+git stash list
+
+# 恢复最近一次暂存
+git stash pop
+
+# 撤销指定文件尚未暂存的修改
+git restore <文件名>
+
+# 将文件移出暂存区，但保留文件修改
+git restore --staged <文件名>
+
+# 用新提交安全地撤销某次提交
+git revert <提交ID>
+```
+
+## 八、常见工作流程
+
+```bash
+git pull origin main
+git status
+git add <修改的文件>
+git commit -m "完成某项修改"
+git push origin main
+```
+
+提示：多人协作时，推送前建议先执行 `git pull --rebase origin main`，遇到冲突解决后再提交和推送。执行 `git reset --hard` 会丢弃未保存的修改，请确认无误后再使用。

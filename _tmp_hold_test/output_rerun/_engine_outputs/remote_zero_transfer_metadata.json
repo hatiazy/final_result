@@ -1,0 +1,190 @@
+{
+  "operation": "只用唯一远端现货和包内 V38/V57 冻结参数生成零段反转最新执行信号",
+  "input_file": "C:\\Users\\admin\\Desktop\\三状态增强\\05_上传包_日期解析修正版\\data\\local_smoke\\CSI500_SPOT_000905_XSHG_20070115_20260817_audited_pure_spot_fixture.parquet",
+  "input_contract": "one_raw_spot_file_only",
+  "spot_audit": {
+    "passed": true,
+    "data_source_whitelist": [
+      "COMPANY_SPOT_PATH"
+    ],
+    "input_file_name": "CSI500_SPOT_000905_XSHG_20070115_20260817_audited_pure_spot_fixture.parquet",
+    "input_rows": 4761,
+    "state_panel_rows": 2092,
+    "date_min": "2007-01-15",
+    "date_max": "2026-08-17",
+    "state_date_min": "2018-01-02",
+    "state_date_max": "2026-08-17",
+    "spot_columns_used": [
+      "index_code",
+      "trade_dt",
+      "date",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume",
+      "prev_close",
+      "amount"
+    ],
+    "raw_columns_seen": [
+      "date",
+      "open",
+      "high",
+      "low",
+      "close",
+      "volume",
+      "amount",
+      "prev_close"
+    ],
+    "remote_spot_schema": "CSI500_SPOT_md_eod_raw_最终版",
+    "state_engine": "remote_frozen_eight_state_v5.51_with_ERS1545_three_state",
+    "eight_state_names": [
+      "位置修复状态",
+      "跳空/日内承接状态",
+      "趋势状态",
+      "量价状态",
+      "路径脆弱状态",
+      "尾部压力/波动切换状态",
+      "反转压力状态",
+      "过热状态"
+    ],
+    "eight_state_spec": {
+      "recipe_version": "v5.51_IC_eight_spot_state_frozen_recipes",
+      "full_start": "2018-01-01",
+      "full_end": "2024-12-31",
+      "rolling_window": 504,
+      "rolling_min_periods": 252,
+      "development_end": "2022-12-31",
+      "validation_end": "2024-12-31",
+      "state_count": 8,
+      "excluded_state": "成交流动性状态",
+      "config_version": "v5.51_IC_eight_spot_state_frozen_recipes",
+      "recipe_count": 8
+    },
+    "state_values": [
+      -1,
+      0,
+      1
+    ],
+    "state_counts": {
+      "-1": 233,
+      "0": 1453,
+      "1": 406
+    },
+    "state_calculated_from_spot": true,
+    "future_values_used_in_state": false,
+    "calendar_day_or_bday_used": false,
+    "formation": "t close",
+    "effective": "next actual row in the supplied spot file (t+1)",
+    "exit": "next actual row in the supplied spot file (t+2)",
+    "primary_label": "O2O_H1=open[t+2]/open[t+1]-1",
+    "observation_label": "C2C_H1=close[t+1]/close[t]-1",
+    "external_state_file_read": false,
+    "external_three_state_baseline_read": false,
+    "non_spot_inputs_read": [],
+    "test_used_for_selection": false
+  },
+  "output_file": "C:\\Users\\admin\\Desktop\\三状态增强\\_tmp_hold_test\\output_rerun\\_engine_outputs\\remote_zero_transfer_predictions.csv",
+  "columns": [
+    "formation_date",
+    "execution_date",
+    "minus_entry_signal",
+    "plus_entry_signal"
+  ],
+  "rows": 2092,
+  "date_min": "2018-01-03",
+  "date_max": "2026-08-18",
+  "freeze": {
+    "down": {
+      "direction": -1,
+      "signal_column": "minus_entry_signal",
+      "source_version": "V38",
+      "candidate_id": "V38_down_s01_a1_q0.85_c1_H03",
+      "core_logic_name": "成交量趋势突破确认",
+      "method_key": "volume_breakout",
+      "score_column": "score_01",
+      "score_variant_number": 1,
+      "score_variant": {
+        "window": 4,
+        "direction_or_recovery_lag": 1
+      },
+      "min_zero_age": 1,
+      "entry_quantile": 0.85,
+      "confirmation_days": 1,
+      "threshold_from_development": 1.2294466376933055,
+      "release_quantile": 0.7,
+      "release_threshold": 0.6645986031220402,
+      "holding_package": {
+        "package_id": "H03",
+        "min_hold_days": 3,
+        "max_hold_days": 10,
+        "release_quantile_gap": 0.15,
+        "cooldown_days": 3
+      }
+    },
+    "up": {
+      "direction": 1,
+      "signal_column": "plus_entry_signal",
+      "source_version": "V57",
+      "candidate_id": "V57_up_s01_a1_q0.85_c1_H04",
+      "core_logic_name": "Recurrence Quantification",
+      "method_key": "rqa",
+      "score_column": "score_01",
+      "score_variant_number": 1,
+      "score_variant": {
+        "embedding_m": 2,
+        "delay": 2,
+        "reserve_variant": 1
+      },
+      "min_zero_age": 1,
+      "entry_quantile": 0.85,
+      "confirmation_days": 1,
+      "threshold_from_development": 4.671980676328502,
+      "release_quantile": 0.65,
+      "release_threshold": 4.606280193236715,
+      "holding_package": {
+        "package_id": "H04",
+        "min_hold_days": 5,
+        "max_hold_days": 20,
+        "release_quantile_gap": 0.2,
+        "cooldown_days": 5
+      }
+    }
+  },
+  "signal_counts": {
+    "minus_entry_days": 136,
+    "plus_entry_days": 86,
+    "minus_holding_days": 331,
+    "plus_holding_days": 420
+  },
+  "latest_formation_audit": {
+    "formation_date": "2026-08-17",
+    "execution_date": "2026-08-18",
+    "base_three_state": 0,
+    "down_score": 0.818012081989632,
+    "up_score": -4.601449275362318,
+    "down_threshold": 1.2294466376933055,
+    "up_threshold": 4.671980676328502,
+    "minus_entry_signal": 0,
+    "plus_entry_signal": 0,
+    "computed_from_spot_through": "2026-08-17",
+    "future_o2o_label_used": false
+  },
+  "date_mapping": {
+    "formation_rule": "formation_date t is computed from the t-day close and earlier spot rows",
+    "execution_rule": "execution_date is the next actual trading row t+1; latest missing row uses the next weekday only as the executable date display",
+    "formation_strictly_before_execution": true,
+    "pending_latest_execution_date_display": true,
+    "latest_formation_to_execution": "2026-08-17 -> 2026-08-18",
+    "signal_values_filled": false,
+    "future_o2o_label_used_for_signal": false
+  },
+  "runtime_contract": {
+    "candidate_scan": false,
+    "candidate_reselection": false,
+    "local_signal_result_read": false,
+    "remote_three_state_baseline_read": false,
+    "future_returns_or_evaluation_records_read": false,
+    "test_used_for_selection": false
+  }
+}
