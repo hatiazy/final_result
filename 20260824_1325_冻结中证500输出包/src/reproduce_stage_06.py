@@ -510,6 +510,79 @@ def _transition_count(values: pd.Series) -> int:
     return int(series.iloc[1:].ne(series.iloc[:-1].to_numpy()).sum())
 
 
+def _plot_teacher_full_period_curve(execution: pd.DataFrame, figures: Path) -> dict[str, Any]:
+    """Draw the teacher-style three-line O2O curve from 2023 to the latest.
+
+    The teacher's reference chart starts in 2023 and compares the base
+    three-state path, the path after the four reversal overlays, and the
+    ordinary index. This is separate from the three local red-box panels.
+    Only execution rows with a real next-trading-day open are plotted; the
+    latest signal row is never turned into a flat placeholder.
+    """
+
+    work = execution.copy()
+    work["实际执行日"] = pd.to_datetime(work["实际执行日"], errors="coerce").dt.normalize()
+    work["执行日O2O"] = pd.to_numeric(work["执行日O2O"], errors="coerce")
+    work = work.loc[
+        work["实际执行日"].ge(pd.Timestamp("2023-01-01"))
+        & work["执行日O2O"].notna()
+    ].sort_values("实际执行日", kind="stable").copy()
+    if work.empty:
+        raise ValueError("老师同时间范围曲线没有 2023 年以来的可评价执行日")
+
+    work["基础三状态_NAV"] = 1.0 + pd.to_numeric(work["原始策略日收益"], errors="coerce").cumsum()
+    work["加入四个反转_NAV"] = 1.0 + pd.to_numeric(work["调整策略日收益"], errors="coerce").cumsum()
+    work["普通指数_NAV"] = 1.0 + pd.to_numeric(work["指数日收益"], errors="coerce").cumsum()
+
+    line_specs = [
+        ("基础三状态_NAV", "基础三状态（Raw 1545）", "#2f6db0"),
+        ("加入四个反转_NAV", "加入四个反转（Adj 1545）", "#e87922"),
+        ("普通指数_NAV", "普通指数（CSI500 O2O）", "#333333"),
+    ]
+    state_specs = {
+        "基础三状态_NAV": [("原始状态", STATE_MARKER_SHAPES["raw"])],
+        "加入四个反转_NAV": [("调整后三状态", STATE_MARKER_SHAPES["adjusted"])],
+        "普通指数_NAV": [],
+    }
+
+    fig, ax = plt.subplots(figsize=(14.0, 5.8), dpi=150)
+    for column, label, color in line_specs:
+        _plot_curve_with_execution_points(
+            ax,
+            work["实际执行日"],
+            work[column],
+            label,
+            color,
+            state_specs=[(work[state_column], marker) for state_column, marker in state_specs[column]],
+            linewidth=1.55 if column != "普通指数_NAV" else 1.15,
+        )
+    ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
+    ax.set_title(
+        "老师原图同时间范围：基础三状态、加入四个反转与普通指数\n"
+        f"{work['实际执行日'].min():%Y-%m-%d}—{work['实际执行日'].max():%Y-%m-%d}；"
+        "执行日 O2O 加算，NAV=1+累计收益，不复利",
+        fontsize=13,
+        weight="bold",
+    )
+    ax.set_xlabel("Execution date")
+    ax.set_ylabel("Additive NAV")
+    ax.xaxis.set_major_locator(mdates.MonthLocator(interval=4))
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    ax.grid(alpha=0.22)
+    _add_state_marker_legend(ax, ncol=3, loc="upper left")
+    fig.autofmt_xdate()
+    fig.tight_layout()
+    output = figures / "29_老师原图同时间范围_2023至最新_三状态与指数_O2O.png"
+    fig.savefig(output, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return {
+        "name": output.name,
+        "date_min": str(work["实际执行日"].min().date()),
+        "date_max": str(work["实际执行日"].max().date()),
+        "rows": int(len(work)),
+    }
+
+
 def build_teacher_red_window_analysis(
     execution: pd.DataFrame,
     output_dir: str | Path,
@@ -664,6 +737,8 @@ def build_teacher_red_window_analysis(
     daily.to_csv(output_dir / "老师红色区间复盘逐日_O2O.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     summary.to_csv(output_dir / "老师红色区间复盘汇总_O2O.csv", index=False, encoding="utf-8-sig")
 
+    full_period = _plot_teacher_full_period_curve(execution, figures)
+
     line_specs = [
         ("局部原始三状态_NAV", "基础三状态（Raw 1545）", "#2f6db0"),
         ("局部加入四反转_NAV", "加入四个反转（Adj 1545）", "#e87922"),
@@ -757,7 +832,8 @@ def build_teacher_red_window_analysis(
     return {
         "summary": summary,
         "daily": daily,
-        "figure_names": [combined_path.name, *individual_names],
+        "full_period": full_period,
+        "figure_names": [full_period["name"], combined_path.name, *individual_names],
         "summary_path": str(output_dir / "老师红色区间复盘汇总_O2O.csv"),
         "daily_path": str(output_dir / "老师红色区间复盘逐日_O2O.csv"),
         "windows": [
@@ -1057,6 +1133,7 @@ def run_stage_06(
         "teacher_red_window_analysis": {
             "summary_path": teacher_analysis["summary_path"],
             "daily_path": teacher_analysis["daily_path"],
+            "full_period": teacher_analysis["full_period"],
             "figure_names": teacher_analysis["figure_names"],
             "windows": teacher_analysis["windows"],
             "o2o_rule": "execution-date open -> next actual trading-date open; local NAV=1+cumsum(position*O2O), no compounding",
