@@ -86,6 +86,33 @@ MODEL_FEATURES = [
 ]
 
 
+# These are the three red boxes drawn on the teacher-provided 2023--2026
+# reference image.  The image has no machine-readable annotations, so the
+# boundaries are recorded explicitly here and are kept unchanged between
+# local and remote runs.  They are diagnostic windows only; they never enter
+# signal generation, threshold selection, or any freeze decision.
+TEACHER_RED_WINDOWS = (
+    {
+        "window_id": "红色区间1",
+        "start": "2023-11-01",
+        "end": "2024-01-15",
+        "description": "2023年末至2024年初的低波动/方向切换过渡区",
+    },
+    {
+        "window_id": "红色区间2",
+        "start": "2024-04-15",
+        "end": "2024-09-15",
+        "description": "2024年中段的反复震荡与方向分歧区",
+    },
+    {
+        "window_id": "红色区间3",
+        "start": "2025-03-01",
+        "end": "2025-07-15",
+        "description": "2025年上半年中性与快速转移并存区",
+    },
+)
+
+
 def _absolute(path: str | Path, label: str) -> Path:
     value = Path(path).expanduser()
     if not value.is_absolute():
@@ -473,6 +500,232 @@ def _plot_forward_quality(analogs: pd.DataFrame, annual: pd.DataFrame, figures: 
     plt.close(fig)
 
 
+def _transition_count(values: pd.Series) -> int:
+    series = pd.to_numeric(values, errors="coerce").dropna()
+    if len(series) <= 1:
+        return 0
+    return int(series.iloc[1:].ne(series.iloc[:-1].to_numpy()).sum())
+
+
+def build_teacher_red_window_analysis(
+    execution: pd.DataFrame,
+    output_dir: str | Path,
+    figures: str | Path,
+) -> dict[str, Any]:
+    """Revisit the three red windows marked on the teacher's reference image.
+
+    The chart deliberately uses the exact Stage-04 O2O additive convention:
+    each execution-date return is next actual trading day's open divided by
+    the execution-date open minus one, and each local NAV is ``1 + cumsum``
+    rather than compounded.  The window NAVs are rebased to 1 only to make
+    the three local panels visually comparable; the daily O2O values are not
+    changed.
+
+    This is a diagnostic/reporting layer.  It does not create or alter any
+    signal, threshold, holding path, or freeze artifact.
+    """
+
+    output_dir = _absolute(output_dir, "TEACHER_RED_WINDOW_OUTPUT_DIR")
+    figures = _absolute(figures, "TEACHER_RED_WINDOW_FIGURES_DIR")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    figures.mkdir(parents=True, exist_ok=True)
+
+    work = execution.copy()
+    work["实际执行日"] = pd.to_datetime(work["实际执行日"]).dt.normalize()
+    work = work.sort_values("实际执行日", kind="stable").drop_duplicates("实际执行日")
+    o2o_valid = pd.to_numeric(work["执行日O2O"], errors="coerce").notna()
+    work["O2O可评价"] = o2o_valid
+
+    required = [
+        "原始状态",
+        "调整后三状态",
+        "原始策略日收益",
+        "调整策略日收益",
+        "指数日收益",
+        "调整原因",
+    ]
+    missing = [column for column in required if column not in work.columns]
+    if missing:
+        raise ValueError(f"老师红色区间复盘缺少Stage-04字段：{missing}")
+
+    daily_rows: list[pd.DataFrame] = []
+    summary_rows: list[dict[str, Any]] = []
+    for spec in TEACHER_RED_WINDOWS:
+        start = pd.Timestamp(spec["start"])
+        end = pd.Timestamp(spec["end"])
+        window = work.loc[
+            work["实际执行日"].between(start, end, inclusive="both") & work["O2O可评价"]
+        ].copy()
+        if window.empty:
+            raise ValueError(f"老师红色区间没有可评价执行日：{spec['window_id']} {start.date()}—{end.date()}")
+
+        window["老师区间"] = spec["window_id"]
+        window["局部原始三状态_NAV"] = 1.0 + pd.to_numeric(window["原始策略日收益"], errors="coerce").cumsum()
+        window["局部加入四反转_NAV"] = 1.0 + pd.to_numeric(window["调整策略日收益"], errors="coerce").cumsum()
+        window["局部普通指数_NAV"] = 1.0 + pd.to_numeric(window["指数日收益"], errors="coerce").cumsum()
+        daily_rows.append(
+            window[
+                [
+                    "老师区间",
+                    "实际执行日",
+                    "推定形成日",
+                    "原始状态",
+                    "调整后三状态",
+                    "调整原因",
+                    "+1反转",
+                    "-1反转",
+                    "0转-1",
+                    "0转+1",
+                    "原始策略日收益",
+                    "调整策略日收益",
+                    "指数日收益",
+                    "局部原始三状态_NAV",
+                    "局部加入四反转_NAV",
+                    "局部普通指数_NAV",
+                ]
+            ].copy()
+        )
+
+        base_state = window["原始状态"].astype(int)
+        adjusted_state = window["调整后三状态"].astype(int)
+        base_zero_days = int(base_state.eq(0).sum())
+        adjusted_zero_days = int(adjusted_state.eq(0).sum())
+        base_zero_to_direction = int((base_state.eq(0) & adjusted_state.ne(0)).sum())
+        base_direction_to_zero = int((base_state.ne(0) & adjusted_state.eq(0)).sum())
+        conflict_days = int(window["调整原因"].astype(str).str.contains("冲突", na=False).sum())
+        if adjusted_zero_days < base_zero_days:
+            analysis = (
+                f"反转层把基础0中的{base_zero_to_direction}个执行日转为方向状态；"
+                f"0状态由{base_zero_days}/{len(window)}天降至{adjusted_zero_days}/{len(window)}天。"
+            )
+        elif adjusted_zero_days > base_zero_days:
+            analysis = (
+                f"该区间存在{base_direction_to_zero}个原方向被退出层暂时中和的执行日；"
+                f"同时反转层补充了{base_zero_to_direction}个基础0方向日，净效果需结合三条O2O曲线判断。"
+            )
+        else:
+            analysis = (
+                f"基础0中有{base_zero_to_direction}个执行日被反转层识别为方向，"
+                f"但有{base_direction_to_zero}个原方向退出日被中和，0状态天数净变化为0。"
+            )
+
+        summary_rows.append(
+            {
+                "老师区间": spec["window_id"],
+                "老师图示范围": f"{start.date()}—{end.date()}",
+                "实际执行日范围": f"{window['实际执行日'].min().date()}—{window['实际执行日'].max().date()}",
+                "可评价执行日": int(len(window)),
+                "基础0天数": base_zero_days,
+                "加入四反转后0天数": adjusted_zero_days,
+                "基础0转方向天数": base_zero_to_direction,
+                "原方向被中和天数": base_direction_to_zero,
+                "上下路径冲突置0天数": conflict_days,
+                "基础O2O加算收益_pct": float(window["原始策略日收益"].sum() * 100.0),
+                "加入四反转O2O加算收益_pct": float(window["调整策略日收益"].sum() * 100.0),
+                "普通指数O2O加算收益_pct": float(window["指数日收益"].sum() * 100.0),
+                "基础状态切换次数": _transition_count(base_state),
+                "加入四反转状态切换次数": _transition_count(adjusted_state),
+                "0转-1信号天数": int(pd.to_numeric(window["0转-1"], errors="coerce").sum()),
+                "0转+1信号天数": int(pd.to_numeric(window["0转+1"], errors="coerce").sum()),
+                "+1反转信号天数": int(pd.to_numeric(window["+1反转"], errors="coerce").sum()),
+                "-1反转信号天数": int(pd.to_numeric(window["-1反转"], errors="coerce").sum()),
+                "区间解释": analysis,
+                "老师图示说明": spec["description"],
+            }
+        )
+
+    daily = pd.concat(daily_rows, ignore_index=True)
+    summary = pd.DataFrame(summary_rows)
+    daily.to_csv(output_dir / "老师红色区间复盘逐日_O2O.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    summary.to_csv(output_dir / "老师红色区间复盘汇总_O2O.csv", index=False, encoding="utf-8-sig")
+
+    line_specs = [
+        ("局部原始三状态_NAV", "基础三状态（Raw 1545）", "#2f6db0"),
+        ("局部加入四反转_NAV", "加入四个反转（Adj 1545）", "#e87922"),
+        ("局部普通指数_NAV", "普通指数（CSI500 O2O）", "#333333"),
+    ]
+
+    def plot_window(window_id: str, path: Path, title_suffix: str = "") -> None:
+        data = daily.loc[daily["老师区间"].eq(window_id)].copy()
+        fig, ax = plt.subplots(figsize=(13.5, 5.4), dpi=150)
+        for column, label, color in line_specs:
+            ax.plot(data["实际执行日"], data[column], label=label, color=color, linewidth=1.5 if column != "局部普通指数_NAV" else 1.15)
+        ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
+        row = summary.loc[summary["老师区间"].eq(window_id)].iloc[0]
+        ax.set_title(
+            f"{window_id} {title_suffix}\n"
+            f"基础0 {int(row['基础0天数'])}天 → 加入四反转后0 {int(row['加入四反转后0天数'])}天；"
+            f"O2O加算口径，窗口首日NAV=1",
+            fontsize=12,
+            weight="bold",
+        )
+        ax.set_ylabel("Additive O2O NAV")
+        ax.set_xlabel("Execution date")
+        ax.legend(ncol=3, fontsize=9, loc="best")
+        ax.grid(alpha=0.24)
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        fig.autofmt_xdate()
+        fig.tight_layout()
+        fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+        plt.close(fig)
+
+    combined_path = figures / "28_老师红色区间_三状态与指数_O2O局部复盘.png"
+    fig, axes = plt.subplots(3, 1, figsize=(14.0, 11.0), dpi=150, sharey=False)
+    for ax, spec in zip(axes, TEACHER_RED_WINDOWS):
+        data = daily.loc[daily["老师区间"].eq(spec["window_id"])].copy()
+        row = summary.loc[summary["老师区间"].eq(spec["window_id"])].iloc[0]
+        for column, label, color in line_specs:
+            ax.plot(data["实际执行日"], data[column], label=label, color=color, linewidth=1.45 if column != "局部普通指数_NAV" else 1.1)
+        ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
+        ax.set_title(
+            f"{spec['window_id']}：{data['实际执行日'].min():%Y-%m-%d}—{data['实际执行日'].max():%Y-%m-%d}；"
+            f"基础0 {int(row['基础0天数'])}天 → 调整后0 {int(row['加入四反转后0天数'])}天",
+            fontsize=11,
+            weight="bold",
+        )
+        ax.set_ylabel("NAV")
+        ax.grid(alpha=0.24)
+        ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+        if ax is axes[0]:
+            ax.legend(ncol=3, fontsize=9, loc="best")
+    axes[-1].set_xlabel("Execution date")
+    fig.suptitle(
+        "老师红色0区间局部复盘：基础三状态、加入四个反转和普通指数\n"
+        "统一使用执行日开盘→下一实际交易日开盘的O2O收益；NAV=1+累计加算收益，不复利",
+        fontsize=13,
+        weight="bold",
+    )
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    fig.savefig(combined_path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+    individual_names: list[str] = []
+    for index, spec in enumerate(TEACHER_RED_WINDOWS, start=1):
+        name = f"28{chr(64 + index)}_{spec['window_id']}_三状态与指数_O2O局部复盘.png"
+        path = figures / name
+        plot_window(spec["window_id"], path, spec["description"])
+        individual_names.append(name)
+
+    return {
+        "summary": summary,
+        "daily": daily,
+        "figure_names": [combined_path.name, *individual_names],
+        "summary_path": str(output_dir / "老师红色区间复盘汇总_O2O.csv"),
+        "daily_path": str(output_dir / "老师红色区间复盘逐日_O2O.csv"),
+        "windows": [
+            {
+                "window_id": spec["window_id"],
+                "start": spec["start"],
+                "end": spec["end"],
+                "description": spec["description"],
+            }
+            for spec in TEACHER_RED_WINDOWS
+        ],
+    }
+
+
 def _audit_local_remote(spot_path: Path, holding_path: Path, event_path: Path, expected_path: Path, stage04_dir: Path | None, execution: pd.DataFrame) -> tuple[pd.DataFrame, dict[str, Any]]:
     # The freeze reference is the event-day eight-list.  The 03/04 holding
     # path deliberately expands 0→-1 and 0→+1 across multiple execution days,
@@ -548,7 +801,13 @@ def _audit_local_remote(spot_path: Path, holding_path: Path, event_path: Path, e
     return pd.DataFrame(rows), {"summary": audit, "metrics": metrics}
 
 
-def _write_report(output_dir: Path, figures: Path, audit: dict[str, Any], analogs: pd.DataFrame) -> Path:
+def _write_report(
+    output_dir: Path,
+    figures: Path,
+    audit: dict[str, Any],
+    analogs: pd.DataFrame,
+    teacher_analysis: dict[str, Any] | None = None,
+) -> Path:
     summary = audit["summary"]
     image_names = [
         "01_历史相似行情_特征距离.png",
@@ -602,19 +861,44 @@ def _write_report(output_dir: Path, figures: Path, audit: dict[str, Any], analog
         "图07结果：按 O2O 加算口径，加入反转和持有路径后的调整结果在各年度都高于对应原始三状态结果；2026 年原始结果约 22.88%，调整后约 35.48%，方向性持有日 82 天。",
         "图07分析：2026 的改善主要说明快速反应层在原三状态未及时改变的区间里补充了部分方向覆盖，但这仍是历史样本中的结果，不应等同于未来必然增益。基础三状态负责阶段基线，四个反转负责事件级的退出和零段转移，二者不是同一种角色。",
         "",
-        "## 五、对老师问题的直接回答",
+        "## 六、对老师问题的直接回答",
         "",
         "1. 红色 0 状态区间：当前图和机制拆解支持“低波动或多视角分歧导致确认不足”的解释。0 不是没有信息，而是尚未达到正式方向状态的确认条件。若要继续细分，应增加诊断层的向上积累、向下积累、冲突和等待确认标签，不能直接把冻结 0 改成方向状态。",
         "2. 2026 识别更快：现有证据支持三部分共同作用——行情波动和方向变化更集中、多个视角在相近日期同步变化、滚动相对标准化使当前值能与近期环境比较；确认和滞回规则则负责避免把所有波动都变成切换。图中可以做机制解释，但不能把贡献精确归因到某一个因素。",
         "3. 当前研究阶段：中证500基础三状态可以先作为长周期阶段基线；四个反转信号作为事件级快速响应层；下一步重点是继续做一日执行日预测的实时观察，而不是重新改写已冻结的长周期状态机。",
         "",
-        "## 六、标准化反事实的边界",
+        "## 七、标准化反事实的边界",
         "",
         "固定开发期锚定图是诊断代理，不是对正式冻结包的替换。由于冻结生产面板不保存每个原始因子在进入滚动z-score前的完整中间序列，06可以严格复现滚动相对分数和状态规则，并提供固定锚定代理；若要做原始因子→z-score→滚动分位数的完全反事实拆分，需要额外导出原始中间特征，但不应修改生产逻辑。",
         "",
-        "## 七、图表与逐图说明",
+        "## 八、图表与逐图说明",
         "",
     ]
+    if teacher_analysis is not None:
+        teacher_summary = teacher_analysis["summary"].copy()
+        teacher_lines = [
+            "## 五、老师红色0区间逐段复盘",
+            "",
+            "以下三个窗口按老师提供的红框时间范围对齐。图中的三条曲线全部采用与04全时期图相同的执行日O2O口径：执行日开盘到下一实际交易日开盘，收益按加法累计，不复利。每个局部窗口仅将首日NAV重新设为1，便于比较，不改变任何日收益。",
+            "",
+            "老师红框边界（按图片坐标人工记录，作为固定诊断窗口）：",
+            "",
+            "- 红色区间1：2023-11-01—2024-01-15；",
+            "- 红色区间2：2024-04-15—2024-09-15；",
+            "- 红色区间3：2025-03-01—2025-07-15。",
+            "",
+            teacher_summary.to_string(index=False),
+            "",
+            "逐段解读：",
+        ]
+        for row in teacher_summary.itertuples(index=False):
+            teacher_lines.append(f"- {row.老师区间}（{row.实际执行日范围}）：{row.区间解释}")
+        teacher_lines.extend(["", "图中蓝线是基础三状态，橙线是加入四个反转后的最终状态，黑线是普通指数的O2O加算基准。红色区间的核心判断不再只看段数，而是同时看0状态覆盖天数、方向覆盖天数和三条O2O曲线。", ""])
+        for name in teacher_analysis["figure_names"]:
+            teacher_lines.append(f"![{name}](<{(figures / name).resolve()}>)")
+            teacher_lines.append("")
+        insert_at = lines.index("## 六、对老师问题的直接回答")
+        lines[insert_at:insert_at] = teacher_lines
     chart_notes = {
         "01_历史相似行情_特征距离.png": "结果与分析见第二节：看当前窗口和历史窗口的整体特征距离，不能把距离直接当作收益预测。",
         "02_历史相似行情_特征对比热图.png": "结果与分析见第二节：看相似性由哪些特征共同构成，避免只盯一个指标。",
@@ -633,13 +917,13 @@ def _write_report(output_dir: Path, figures: Path, audit: dict[str, Any], analog
         lines.append(f"![{name}](<{(figures / name).resolve()}>)")
         lines.append("")
     lines.extend([
-        "## 八、附录：技术审计图",
+        "## 九、附录：技术审计图",
         "",
         chart_notes[image_names[-1]],
         "",
         f"![{image_names[-1]}](<{(figures / image_names[-1]).resolve()}>)",
         "",
-        "## 九、最终定性",
+        "## 十、最终定性",
         "",
         "当前可以说：2026 的快速识别与更高的行情变化集中度、多视角同步和滚动相对比较相符；正式状态机仍通过确认、最小驻留和滞回过滤噪声。相似行情分析支持情景解释，不构成确定性预测。正式冻结包保持不变，06 只承担解释、类比和稳健性诊断。",
         "",
@@ -698,6 +982,7 @@ def run_stage_06(
     proxy, counterfactual = _fixed_anchor_proxy(model)
     annual = _annual_mechanism(combined, execution)
     audit_rows, audit = _audit_local_remote(spot_path, holding_path, event_path, expected_path, stage04_dir, execution)
+    teacher_analysis = build_teacher_red_window_analysis(execution, output_dir, figures)
 
     analogs.to_csv(tables / "历史相似行情候选_60日.csv", index=False, encoding="utf-8-sig")
     comparison.to_csv(tables / "历史相似行情特征对比_z值.csv", index=False, encoding="utf-8-sig")
@@ -723,6 +1008,13 @@ def run_stage_06(
         "production_logic_modified": False,
         "exact_raw_to_zscore_counterfactual_available": False,
         "exact_raw_to_zscore_counterfactual_note": "冻结1545面板不保存原始因子中间序列；本次使用固定开发期锚定代理，不回写生产逻辑",
+        "teacher_red_window_analysis": {
+            "summary_path": teacher_analysis["summary_path"],
+            "daily_path": teacher_analysis["daily_path"],
+            "figure_names": teacher_analysis["figure_names"],
+            "windows": teacher_analysis["windows"],
+            "o2o_rule": "execution-date open -> next actual trading-date open; local NAV=1+cumsum(position*O2O), no compounding",
+        },
         "audit": audit["summary"],
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -732,13 +1024,19 @@ def run_stage_06(
     _plot_counterfactual(proxy, counterfactual, figures)
     _plot_forward_quality(analogs, annual, figures)
     _save_table_figure(audit_rows, figures / "08_本地远端一致性审计.png", "Local / remote parity and date-lineage audit")
-    report = _write_report(output_dir, figures, audit, analogs)
+    report = _write_report(output_dir, figures, audit, analogs, teacher_analysis)
 
     return {
         "output_dir": str(output_dir),
         "report": str(report),
         "figures": [str(path) for path in sorted(figures.glob("*.png"))],
         "tables": [str(path) for path in sorted(tables.glob("*.csv"))],
+        "teacher_red_window_analysis": {
+            "summary_path": teacher_analysis["summary_path"],
+            "daily_path": teacher_analysis["daily_path"],
+            "figure_names": teacher_analysis["figure_names"],
+            "windows": teacher_analysis["windows"],
+        },
         "latest_formation_date": str(latest.date()),
         "latest_execution_date": str(pd.Timestamp(execution["实际执行日"].max()).date()),
         "audit": audit["summary"],
@@ -746,4 +1044,4 @@ def run_stage_06(
     }
 
 
-__all__ = ["run_stage_06"]
+__all__ = ["run_stage_06", "build_teacher_red_window_analysis", "TEACHER_RED_WINDOWS"]
