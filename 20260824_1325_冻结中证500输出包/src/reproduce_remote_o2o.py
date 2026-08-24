@@ -196,6 +196,53 @@ def build_adjusted_state(frame: pd.DataFrame) -> pd.DataFrame:
     return result
 
 
+def build_zero_transfer_only_state(frame: pd.DataFrame) -> pd.DataFrame:
+    """Overlay only the two zero-state reversal holding paths.
+
+    This is deliberately different from ``调整后三状态``: it keeps the
+    frozen base 1545 state, applies only ``0转-1`` and ``0转+1`` while the
+    base state is 0, and ignores ``-1反转``/``+1反转`` entirely.  The two
+    zero-transfer columns come from the holding-aware 03 output, so a value
+    remains active for its frozen H03/H04 path rather than only on the event
+    day.
+    """
+
+    result = frame.copy()
+    base = result["三状态"].to_numpy(dtype=int)
+    down = result["0转-1"].to_numpy(dtype=bool)
+    up = result["0转+1"].to_numpy(dtype=bool)
+    adjusted = np.zeros(len(result), dtype=np.int8)
+    reasons: list[str] = []
+
+    for i, state in enumerate(base):
+        if state == -1:
+            adjusted[i] = -1
+            reasons.append("基础-1")
+        elif state == 1:
+            adjusted[i] = 1
+            reasons.append("基础+1")
+        elif state == 0:
+            if down[i] and up[i]:
+                adjusted[i] = 0
+                reasons.append("零段同日冲突置0")
+            elif down[i]:
+                adjusted[i] = -1
+                reasons.append("0转-1持有")
+            elif up[i]:
+                adjusted[i] = 1
+                reasons.append("0转+1持有")
+            else:
+                adjusted[i] = 0
+                reasons.append("基础0")
+        else:
+            raise ValueError(f"非法三状态：{state}")
+
+    result["仅零段反转状态"] = adjusted
+    result["仅零段反转原因"] = reasons
+    result["仅零段反转日收益"] = result["仅零段反转状态"].astype(float) * result["执行日O2O"]
+    return result
+
+
 def build_execution_frame(spot_path: str | Path, holding_path: str | Path) -> pd.DataFrame:
     """Join 04 signals to spot prices and calculate execution-date O2O."""
 
@@ -246,14 +293,22 @@ def build_execution_frame(spot_path: str | Path, holding_path: str | Path) -> pd
     return frame
 
 
-def _directional_segments(frame: pd.DataFrame, state_column: str, return_column: str, series: str) -> pd.DataFrame:
+def _directional_segments(
+    frame: pd.DataFrame,
+    state_column: str,
+    return_column: str,
+    series: str,
+    reason_column: str | None = None,
+) -> pd.DataFrame:
     work = frame[["实际执行日", state_column, return_column, "阶段"]].copy()
+    if reason_column is not None:
+        work[reason_column] = frame[reason_column].astype(str)
     work["run_id"] = work[state_column].ne(work[state_column].shift()).cumsum()
     rows: list[dict[str, Any]] = []
     for run_id, group in work.groupby("run_id", sort=True):
         state = int(group[state_column].iloc[0])
         returns = pd.to_numeric(group[return_column], errors="coerce")
-        rows.append({
+        row = {
             "series": series,
             "run_id": int(run_id),
             "state": state,
@@ -264,7 +319,12 @@ def _directional_segments(frame: pd.DataFrame, state_column: str, return_column:
             "holding_days": int(len(group)),
             "segment_return": float(returns.sum()) if returns.notna().any() else np.nan,
             "return_available": bool(returns.notna().all()),
-        })
+        }
+        if reason_column is not None:
+            reasons = group[reason_column].tolist()
+            row["source_detail"] = "；".join(dict.fromkeys(reasons))
+            row["zero_transfer_days"] = int(sum(reason in {"0转-1持有", "0转+1持有"} for reason in reasons))
+        rows.append(row)
     return pd.DataFrame(rows)
 
 
@@ -277,6 +337,35 @@ def build_segments(frame: pd.DataFrame) -> pd.DataFrame:
     result["aligned_segment_return"] = result["segment_return"]
     result["is_directional"] = result["state"].isin([-1, 1])
     return result
+
+
+def build_zero_transfer_only_segments(frame: pd.DataFrame) -> pd.DataFrame:
+    """Build contiguous execution-date segments for the zero-only overlay."""
+
+    scenario = build_zero_transfer_only_state(frame)
+    result = _directional_segments(
+        scenario,
+        "仅零段反转状态",
+        "仅零段反转日收益",
+        "仅零段反转（0→-1/0→+1）",
+        reason_column="仅零段反转原因",
+    )
+    result["aligned_segment_return"] = result["segment_return"]
+    result["is_directional"] = result["state"].isin([-1, 1])
+    return result
+
+
+def build_holding_duration_distribution(segments: pd.DataFrame) -> pd.DataFrame:
+    """Count exact segment holding durations, including the flat state."""
+
+    result = (
+        segments.groupby(["state", "holding_days"], as_index=False)
+        .agg(segments=("run_id", "size"), total_days=("holding_days", "sum"))
+        .sort_values(["state", "holding_days"])
+        .reset_index(drop=True)
+    )
+    result["state_label"] = result["state"].map({-1: "-1", 0: "0", 1: "+1"})
+    return result[["state", "state_label", "holding_days", "segments", "total_days"]]
 
 
 def _annual_rows(frame: pd.DataFrame, state_column: str, return_column: str, name: str) -> pd.DataFrame:
@@ -894,10 +983,16 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
     output_dir.mkdir(parents=True, exist_ok=True)
     frame = build_execution_frame(spot_path, holding_path)
     segments = build_segments(frame)
+    zero_only_frame = build_zero_transfer_only_state(frame)
+    zero_only_segments = build_zero_transfer_only_segments(frame)
+    zero_only_duration = build_holding_duration_distribution(zero_only_segments)
     risk = build_risk_summary(frame)
     annual = build_annual_tables(frame)
     frame.to_csv(output_dir / "O2O加算逐日收益与状态.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     segments.to_csv(output_dir / "持有段明细.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    zero_only_frame.to_csv(output_dir / "仅零段反转状态逐日.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    zero_only_segments.to_csv(output_dir / "持有段明细_仅零段反转.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    zero_only_duration.to_csv(output_dir / "持有段天数分布_仅零段反转.csv", index=False, encoding="utf-8-sig")
     risk.to_csv(output_dir / "O2O加算风险指标.csv", index=False, encoding="utf-8-sig")
     annual["signals"].to_csv(output_dir / "年度段计数与信号计数_原始.csv", index=False, encoding="utf-8-sig")
     segment_counts = (
@@ -906,6 +1001,20 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
         .agg(segments=("run_id", "size"), holding_days=("holding_days", "sum"), mean_holding_days=("holding_days", "mean"))
     )
     segment_counts.to_csv(output_dir / "持有段计数_按系列.csv", index=False, encoding="utf-8-sig")
+    zero_only_counts = (
+        zero_only_segments.loc[zero_only_segments["is_directional"]]
+        .groupby(["series", "state"], as_index=False)
+        .agg(
+            segments=("run_id", "size"),
+            holding_days=("holding_days", "sum"),
+            mean_holding_days=("holding_days", "mean"),
+            median_holding_days=("holding_days", "median"),
+            min_holding_days=("holding_days", "min"),
+            max_holding_days=("holding_days", "max"),
+            zero_transfer_days=("zero_transfer_days", "sum"),
+        )
+    )
+    zero_only_counts.to_csv(output_dir / "持有段计数_仅零段反转.csv", index=False, encoding="utf-8-sig")
     _write_stage04_curves(frame, output_dir)
     _write_remote_style_aliases(output_dir)
     metadata = {
@@ -920,6 +1029,14 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
         "latest_formation_date": str(frame["推定形成日"].iloc[-1].date()) if pd.notna(frame["推定形成日"].iloc[-1]) else None,
         "latest_row_has_next_open": bool(frame["O2O可评价"].iloc[-1]),
         "return_rule": "execution open to next actual trading open; additive NAV=1+cumsum(position*O2O)",
+        "zero_transfer_only_overlay": {
+            "included_signals": ["0转-1", "0转+1"],
+            "excluded_signals": ["-1反转", "+1反转"],
+            "holding_aware_input": True,
+            "segments_total": int(len(zero_only_segments)),
+            "directional_segments": int(zero_only_segments["is_directional"].sum()),
+            "directional_days": int(zero_only_segments.loc[zero_only_segments["is_directional"], "holding_days"].sum()),
+        },
         "no_placeholder_values": True,
         "generated_files": sorted(p.name for p in output_dir.iterdir() if p.is_file()),
     }
@@ -1054,6 +1171,9 @@ __all__ = [
     "SIGNAL_COLUMNS",
     "read_spot",
     "read_holding_eight",
+    "build_zero_transfer_only_state",
+    "build_zero_transfer_only_segments",
+    "build_holding_duration_distribution",
     "build_execution_frame",
     "run_stage_04",
     "run_stage_05",

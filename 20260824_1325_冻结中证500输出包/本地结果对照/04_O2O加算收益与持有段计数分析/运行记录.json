@@ -25,5 +25,25 @@
     "年度段计数与信号计数_原始.csv",
     "持有段明细.csv",
     "持有段计数_按系列.csv"
-  ]
+  ],
+  "zero_transfer_only_overlay": {
+    "included_signals": [
+      "0转-1",
+      "0转+1"
+    ],
+    "excluded_signals": [
+      "-1反转",
+      "+1反转"
+    ],
+    "holding_aware_input": true,
+    "segments_total": 448,
+    "directional_segments": 243,
+    "directional_days": 1196,
+    "generated_files": [
+      "仅零段反转状态逐日.csv",
+      "持有段明细_仅零段反转.csv",
+      "持有段天数分布_仅零段反转.csv",
+      "持有段计数_仅零段反转.csv"
+    ]
+  }
 }
