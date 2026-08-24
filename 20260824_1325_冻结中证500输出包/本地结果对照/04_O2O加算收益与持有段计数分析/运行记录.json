@@ -1,0 +1,29 @@
+{
+  "stage": "04_returns_and_segment_counts",
+  "spot_path": "/Users/hzy/Desktop/0817合并查看/_rq_latest_20260823/CSI500_SPOT_md_eod_raw_RQ_20260817.parquet",
+  "holding_eight_path": "/Users/hzy/Desktop/0817合并查看/_rq_latest_20260823/holding_period/含持有期八列表.csv",
+  "rows": 2096,
+  "o2o_evaluable_rows": 2094,
+  "raw_active_days": 639,
+  "adjusted_active_days": 1088,
+  "latest_execution_date": "2026-08-24",
+  "latest_formation_date": "2026-08-21",
+  "latest_row_has_next_open": false,
+  "return_rule": "execution open to next actual trading open; additive NAV=1+cumsum(position*O2O)",
+  "no_placeholder_values": true,
+  "generated_files": [
+    "04_原始与调整_净值对比.png",
+    "04_原始与调整_超额净值对比.png",
+    "04_原始与调整_风险指标对比.png",
+    "04_调整相对原始_超额收益.png",
+    "11_原始与调整_风险指标对比.png",
+    "12_原始与调整_净值对比.png",
+    "13_原始与调整_超额净值对比.png",
+    "14_调整相对原始_超额收益.png",
+    "O2O加算逐日收益与状态.csv",
+    "O2O加算风险指标.csv",
+    "年度段计数与信号计数_原始.csv",
+    "持有段明细.csv",
+    "持有段计数_按系列.csv"
+  ]
+}

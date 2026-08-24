@@ -1,0 +1,33 @@
+{
+  "source": "RiceQuant rqdatac",
+  "credential_source": "macos_keychain_separate_items",
+  "credential_values_written": false,
+  "query_start": "2005-01-01",
+  "query_end": "2026-08-24",
+  "returned_rows": 5255,
+  "date_min": "20050104",
+  "date_max": "20260821",
+  "latest_calendar_date": 20260821,
+  "index_code_values": [
+    "000905.SH"
+  ],
+  "columns": [
+    "index_code",
+    "trade_dt",
+    "crncy_code",
+    "preclose",
+    "open",
+    "high",
+    "low",
+    "close",
+    "change",
+    "pctchange",
+    "volume",
+    "amount",
+    "data_source",
+    "month"
+  ],
+  "spot_only": true,
+  "raw_file": "CSI500_SPOT_md_eod_raw_RQ_20260817.parquet",
+  "raw_file_sha256": "e6d25f8777eea7894b93bcaea1f16928efdeeff751213d58ade970beeae09da1"
+}
