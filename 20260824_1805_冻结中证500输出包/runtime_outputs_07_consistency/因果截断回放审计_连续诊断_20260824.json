@@ -1,0 +1,246 @@
+{
+  "audit_name": "因果截断回放与全输出时间口径审计",
+  "full_spot_max": "2026-08-24",
+  "truncated_spot_max": "2026-08-21",
+  "principle": "只比较共同执行日/形成日；新增 2026-08-24 收盘数据不能改变此前已生成的行。",
+  "all_checks_pass": true,
+  "checks": {
+    "最终执行日简表.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "连续诊断输出.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_nonzero_five_columns.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_nonzero_continuous.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_zero_transfer_predictions.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_zero_transfer_continuous.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-03",
+      "full_key_max": "2026-08-25",
+      "truncated_key_min": "2018-01-03",
+      "truncated_key_max": "2026-08-24",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_down_extreme_predictions.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-02",
+      "full_key_max": "2026-08-24",
+      "truncated_key_min": "2018-01-02",
+      "truncated_key_max": "2026-08-21",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "_engine_outputs/remote_up_extreme_predictions.csv": {
+      "status": "PASS",
+      "full_rows": 2097,
+      "truncated_rows": 2096,
+      "common_rows": 2096,
+      "full_key_min": "2018-01-02",
+      "full_key_max": "2026-08-24",
+      "truncated_key_min": "2018-01-02",
+      "truncated_key_max": "2026-08-21",
+      "mismatch_cells": 0,
+      "mismatch_rows": 0,
+      "max_abs_numeric_diff": 0.0,
+      "examples": []
+    },
+    "date_mapping_continuous_full": {
+      "status": "PASS",
+      "rows": 2097,
+      "bad_count": 0,
+      "examples": [],
+      "formation_min": "2018-01-02",
+      "formation_max": "2026-08-24",
+      "execution_min": "2018-01-03",
+      "execution_max": "2026-08-25"
+    },
+    "date_mapping_continuous_truncated": {
+      "status": "PASS",
+      "rows": 2096,
+      "bad_count": 0,
+      "examples": [],
+      "formation_min": "2018-01-02",
+      "formation_max": "2026-08-21",
+      "execution_min": "2018-01-03",
+      "execution_max": "2026-08-24"
+    },
+    "missing_values": {
+      "status": "PASS",
+      "compact_signal_na": 0,
+      "diagnostic_signal_na": 0,
+      "diagnostic_structural_na": {
+        "+1转0_score": 1011,
+        "+1转0_距阈值": 1011
+      },
+      "diagnostic_latest_row_na": 0,
+      "diagnostic_structural_na_policy": "V80 早期 Development 行尚未进入前向评分域，相关连续值不适用；保留 NaN，不以 0、占位或后续值回填。最新执行日全部诊断字段非空。"
+    },
+    "latest_row": {
+      "status": "PASS",
+      "formation_date": "2026-08-24",
+      "execution_date": "2026-08-25",
+      "signal_columns_non_null": true
+    },
+    "metadata": {
+      "runtime_outputs_holding_period/_engine_outputs/remote_zero_transfer_metadata.json": {
+        "date_mapping": {
+          "formation_rule": "formation_date t is computed from the t-day close and earlier spot rows",
+          "execution_rule": "execution_date is the next actual trading row t+1; latest missing row uses the next weekday only as the executable date display",
+          "formation_strictly_before_execution": true,
+          "pending_latest_execution_date_display": true,
+          "latest_formation_to_execution": "2026-08-24 -> 2026-08-25",
+          "signal_values_filled": false,
+          "future_o2o_label_used_for_signal": false
+        }
+      },
+      "runtime_outputs_holding_period/_engine_outputs/remote_nonzero_metadata.json": {
+        "test_used_for_selection": false
+      },
+      "runtime_outputs_holding_period/_engine_outputs/remote_up_extreme_summary.json": {
+        "test_used_for_selection": false,
+        "prediction_date_max": "2026-08-24"
+      },
+      "runtime_outputs_holding_period/_engine_outputs/remote_down_extreme_summary.json": {
+        "test_used_for_selection": false,
+        "prediction_date_max": "2026-08-24"
+      },
+      "runtime_outputs_holding_period/连续诊断输出_运行记录.json": {
+        "future_o2o_label_used": false,
+        "signal_values_filled": false
+      },
+      "runtime_outputs_holding_period/最终执行日简表_生成记录.json": {
+        "candidate_rebuild": false,
+        "date_mapping": {
+          "verified": true,
+          "formation_date_min": "2018-01-02",
+          "formation_date_max": "2026-08-24",
+          "execution_date_min": "2018-01-03",
+          "execution_date_max": "2026-08-25",
+          "latest_formation_to_execution": "2026-08-24 -> 2026-08-25",
+          "nonzero_grid_exact": true,
+          "extreme_formation_to_execution_exact": true,
+          "zero_transfer_formation_to_execution_exact": true,
+          "missing_signal_values_filled": false
+        }
+      }
+    },
+    "static_future_data_scan": {
+      "compact_builder_future_terms": [],
+      "continuous_builder_future_terms": [],
+      "zero_transfer_future_label_reference": "docstring-only deliberate exclusion at run_zero_transfer_frozen.py:154",
+      "extreme_future_open_close_references": "evaluation-only code after frozen prediction; prediction path uses frozen paper score before Test read"
+    },
+    "future_label_ablation": {
+      "status": "PASS",
+      "principle": "把形成日之后不可用的未来评价标签置空，再重算冻结评分/信号；Development 中已冻结训练标签保留，作为合法的历史训练样本。",
+      "zero_transfer": {
+        "state_audit_future_values_used": false,
+        "V38_down_score_max_abs_diff": 0.0,
+        "V38_down_binary_signal_same": true,
+        "V38_down_holding_path_same": true,
+        "V57_up_score_max_abs_diff": 0.0,
+        "V57_up_binary_signal_same": true,
+        "V57_up_holding_path_same": true
+      },
+      "nonzero": {
+        "V55_minus_all_score_02_max_abs_diff": 0.0,
+        "V55_minus_post_development_score_02_max_abs_diff": 0.0,
+        "V80_plus_all_score_02_max_abs_diff": 0.0,
+        "V80_plus_post_development_score_02_max_abs_diff": 0.0,
+        "fit_uses_validation": false,
+        "fit_uses_test": false
+      },
+      "extreme": {
+        "V156_down_score_max_abs_diff": 0.0,
+        "V189_up_score_max_abs_diff": 0.0,
+        "test_used_for_selection": false
+      },
+      "final_output": {
+        "compact_rows": 2097,
+        "diagnostic_rows": 2097,
+        "compact_dates_equal_diagnostic": true,
+        "compact_signal_na": 0,
+        "diagnostic_structural_na": {
+          "+1转0_score": 1011,
+          "+1转0_距阈值": 1011
+        },
+        "diagnostic_latest_row_na": 0,
+        "latest_formation_date": "2026-08-24",
+        "latest_execution_date": "2026-08-25"
+      }
+    }
+  }
+}

@@ -21,7 +21,11 @@ OUTPUT_DIR = _OUTPUT_RAW.resolve()
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(SOURCE_ROOT))
 
-from signal_export import SIGNAL_COLUMNS, build_frozen_signal_export  # noqa: E402
+from signal_export import (  # noqa: E402
+    SIGNAL_COLUMNS,
+    build_frozen_score_export,
+    build_frozen_signal_export,
+)
 
 
 def _json_default(value: Any) -> Any:
@@ -49,6 +53,8 @@ if list(signal.columns) != list(SIGNAL_COLUMNS):
 output_path = OUTPUT_DIR / "remote_nonzero_five_columns.csv"
 metadata_path = OUTPUT_DIR / "remote_nonzero_metadata.json"
 signal.to_csv(output_path, index=False, encoding="utf-8-sig")
+score_sidecar = build_frozen_score_export()
+score_sidecar.to_csv(OUTPUT_DIR / "remote_nonzero_continuous.csv", index=False, encoding="utf-8-sig")
 metadata_path.write_text(
     json.dumps(metadata, ensure_ascii=False, indent=2, default=_json_default) + "\n",
     encoding="utf-8",

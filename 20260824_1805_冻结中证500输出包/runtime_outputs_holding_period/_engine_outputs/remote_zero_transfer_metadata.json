@@ -91,6 +91,7 @@
     "test_used_for_selection": false
   },
   "output_file": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_holding_period/_engine_outputs/remote_zero_transfer_predictions.csv",
+  "continuous_output_file": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_holding_period/_engine_outputs/remote_zero_transfer_continuous.csv",
   "columns": [
     "formation_date",
     "execution_date",

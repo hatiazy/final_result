@@ -159,21 +159,26 @@ def _compare_table(label: str, remote_path: Path, local_path: Path, output_dir: 
 
 def _table_pairs(package_root: Path, reference_root: Path) -> list[tuple[str, Path, Path]]:
     remote_04 = package_root / "runtime_outputs_04_returns"
-    local_04 = reference_root / "04_O2O加算收益与持有段计数分析"
+    local_04 = reference_root / "02_O2O加算收益与持有段计数分析"
     remote_05 = package_root / "runtime_outputs_05_yearly"
-    local_05 = reference_root / "05_逐年分析与2026表现解释"
+    local_05 = reference_root / "03_逐年分析与2026表现解释"
     remote_06 = package_root / "runtime_outputs_06_mechanism" / "tables"
-    local_06 = reference_root / "06_历史相似行情与机制分解分析" / "tables"
+    local_06 = reference_root / "04_历史相似行情与机制分解分析" / "tables"
     pairs: list[tuple[str, Path, Path]] = [
         (
             "01_事件八列",
             package_root / "runtime_outputs" / "最终执行日简表.csv",
-            reference_root / "01_只用现货生成八列" / "最终执行日简表.csv",
+            reference_root / "01_含持有期零段反转八列表" / "最终执行日简表.csv",
         ),
         (
-            "03_含持有期八列",
+            "01_含持有期八列",
             package_root / "runtime_outputs_holding_period" / "含持有期八列表.csv",
-            reference_root / "03_含持有期零段反转八列表" / "含持有期八列表.csv",
+            reference_root / "01_含持有期零段反转八列表" / "含持有期八列表.csv",
+        ),
+        (
+            "01_连续诊断输出",
+            package_root / "runtime_outputs_holding_period" / "连续诊断输出.csv",
+            reference_root / "01_含持有期零段反转八列表" / "连续诊断输出.csv",
         ),
     ]
     for filename in (
@@ -183,7 +188,7 @@ def _table_pairs(package_root: Path, reference_root: Path) -> list[tuple[str, Pa
         "持有段计数_按系列.csv",
         "年度段计数与信号计数_原始.csv",
     ):
-        pairs.append((f"04_{filename[:-4]}", remote_04 / filename, local_04 / filename))
+        pairs.append((f"02_{filename[:-4]}", remote_04 / filename, local_04 / filename))
     for filename in (
         "逐年_信号与持有段计数.csv",
         "逐年_加入四个反转分析.csv",
@@ -191,7 +196,7 @@ def _table_pairs(package_root: Path, reference_root: Path) -> list[tuple[str, Pa
         "2026_逐日表现分解.csv",
         "2026_逐月表现分解.csv",
     ):
-        pairs.append((f"05_{filename[:-4]}", remote_05 / filename, local_05 / filename))
+        pairs.append((f"03_{filename[:-4]}", remote_05 / filename, local_05 / filename))
     for filename in (
         "历史相似行情候选_60日.csv",
         "历史相似行情特征对比_z值.csv",
@@ -199,7 +204,7 @@ def _table_pairs(package_root: Path, reference_root: Path) -> list[tuple[str, Pa
         "滚动相对与固定锚定代理_年度对比.csv",
         "年度行情机制与收益对比.csv",
     ):
-        pairs.append((f"06_{filename[:-4]}", remote_06 / filename, local_06 / filename))
+        pairs.append((f"04_{filename[:-4]}", remote_06 / filename, local_06 / filename))
     return pairs
 
 

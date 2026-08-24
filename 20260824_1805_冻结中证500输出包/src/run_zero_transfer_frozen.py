@@ -233,6 +233,7 @@ def run_zero_transfer_frozen(
     effective, pending_effective = _effective_dates(panel)
     signals: dict[str, np.ndarray] = {}
     holding_paths: dict[str, np.ndarray] = {}
+    score_values: dict[str, np.ndarray] = {}
     latest_scores: dict[str, float | None] = {}
     for side in ("down", "up"):
         freeze = FROZEN_ZERO_TRANSFER[side]
@@ -250,6 +251,7 @@ def run_zero_transfer_frozen(
         if column not in scores.columns:
             raise ValueError(f"{side} 冻结评分列不存在：{column}")
         score = scores[column].to_numpy(dtype=float)
+        score_values[side] = score.copy()
         latest_scores[side] = float(score[-1]) if np.isfinite(score[-1]) else None
         selected, holding_path = _frozen_signal_path(panel, score, freeze)
         signals[side] = selected
@@ -272,6 +274,27 @@ def run_zero_transfer_frozen(
         raise AssertionError("零段反转结果出现缺失值；禁止用默认值填补")
     if not result["minus_entry_signal"].isin([0, 1]).all() or not result["plus_entry_signal"].isin([0, 1]).all():
         raise AssertionError("零段反转结果只能包含 0/1")
+
+    # Keep the causal continuous scores beside the binary signal export.  The
+    # compact eight-column contract remains unchanged; this sidecar is used by
+    # the daily notebook to show score/threshold distance without recomputing
+    # the frozen V38/V57 engines a second time.  It contains no future labels.
+    continuous_result = pd.DataFrame(
+        {
+            "formation_date": formation,
+            "execution_date": execution,
+            "minus_score": score_values["down"],
+            "plus_score": score_values["up"],
+            "minus_threshold": float(FROZEN_ZERO_TRANSFER["down"]["threshold_from_development"]),
+            "plus_threshold": float(FROZEN_ZERO_TRANSFER["up"]["threshold_from_development"]),
+            "minus_release_threshold": float(FROZEN_ZERO_TRANSFER["down"]["release_threshold"]),
+            "plus_release_threshold": float(FROZEN_ZERO_TRANSFER["up"]["release_threshold"]),
+            "minus_entry_signal": signals["down"].astype("int8"),
+            "plus_entry_signal": signals["up"].astype("int8"),
+        }
+    )
+    continuous_path = output / "remote_zero_transfer_continuous.csv"
+    continuous_result.to_csv(continuous_path, index=False, encoding="utf-8-sig")
     signal_path = output / "remote_zero_transfer_predictions.csv"
     result.to_csv(signal_path, index=False, encoding="utf-8-sig")
     metadata = {
@@ -280,6 +303,7 @@ def run_zero_transfer_frozen(
         "input_contract": "one_raw_spot_file_only",
         "spot_audit": spot_audit,
         "output_file": str(signal_path),
+        "continuous_output_file": str(continuous_path),
         "columns": required,
         "rows": int(len(result)),
         "date_min": str(result["execution_date"].min()),

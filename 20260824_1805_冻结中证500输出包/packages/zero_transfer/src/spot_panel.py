@@ -224,7 +224,16 @@ def load_spot_panel(path: str | Path) -> tuple[pd.DataFrame, pd.DataFrame, dict[
     panel_columns = [
         "formation_date", *EIGHT_STATE_NAMES,
         *[f"band_{name}" for name in EIGHT_STATE_NAMES],
-        "direction_score", "state", "state_label", "state_age", "state_switch_flag",
+        # These are the same causal intermediate values used by the frozen
+        # three-state machine.  Exposing them here lets the daily notebook
+        # publish diagnostics without rebuilding a second state engine.
+        "direction_score", "direction_score_continuous", "direction_score_band",
+        "slow_engine", "fast_engine", "risk_pressure", "risk_high_count",
+        "downside_route_flag", "downside_evidence", "downside_continuation",
+        "positive_evidence", "positive_continuation", "rebound_veto",
+        "heat_reversal_exit_veto", "long_positive_context",
+        "raw_three_state", "pending_transition",
+        "state", "state_label", "state_age", "state_switch_flag",
         "effective_date", "exit_date", "h2_exit_date", "h3_exit_date",
         "open", "high", "low", "close", "volume", "amount", "o2o_h1", "o2o_h2",
         "o2o_h3", "c2c_h1", "next_state", "next2_state", "next3_state",

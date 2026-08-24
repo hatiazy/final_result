@@ -277,4 +277,36 @@ def build_frozen_signal_export(
     return output, metadata_out, freezes
 
 
-__all__ = ["SIGNAL_COLUMNS", "build_frozen_signal_export"]
+def build_frozen_score_export() -> pd.DataFrame:
+    """Export the frozen V55/V80 score paths for the daily monitor.
+
+    This sidecar does not scan candidates or choose a new threshold.  It only
+    writes the same frozen score variants and their registered Development
+    thresholds so distance-to-boundary can be inspected next to the binary
+    signal export.
+    """
+    panel, _ = build_panel()
+    effective = pd.Series(
+        pd.to_datetime(panel["effective_date"], errors="coerce").dt.normalize().to_numpy(),
+        index=panel.index,
+        dtype="datetime64[ns]",
+    )
+    if effective.isna().any():
+        missing = np.flatnonzero(effective.isna().to_numpy())
+        if len(missing) != 1 or missing[0] != len(effective) - 1:
+            raise RuntimeError("非零连续分数只允许最后一条形成日缺少下一实际执行日")
+        effective.iloc[-1] = pd.Timestamp(panel.index[-1]) + pd.offsets.BDay(1)
+    rows = pd.DataFrame({
+        "formation_date": pd.DatetimeIndex(panel.index),
+        "execution_date": effective.to_numpy(),
+    })
+    for side, output_prefix in (("minus", "minus"), ("plus", "plus")):
+        cfg = FROZEN_NONZERO_PARAMETERS[side]
+        scores, _ = _score_variants(panel, str(cfg["version"]), side)
+        score = pd.to_numeric(scores[str(cfg["score_variant"])], errors="coerce")
+        rows[f"{output_prefix}_score"] = score.to_numpy()
+        rows[f"{output_prefix}_threshold"] = float(cfg["threshold_value"])
+    return rows
+
+
+__all__ = ["SIGNAL_COLUMNS", "build_frozen_signal_export", "build_frozen_score_export"]

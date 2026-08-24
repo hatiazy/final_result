@@ -358,7 +358,26 @@ def generate_compact_output(
             label,
             engine_output / f"run_extreme_{side}.log",
         )
-    return build_compact_summary(spot, engine_output)
+    record = build_compact_summary(spot, engine_output)
+    # The compact eight-column contract stays unchanged.  The daily entry also
+    # publishes the causal continuous sidecar requested by the monitoring
+    # notebook, using exactly the same engine outputs and formation calendar.
+    from continuous_diagnostics import build_continuous_diagnostics
+
+    diagnostic_record = build_continuous_diagnostics(spot, engine_output, root_output)
+    record["continuous_diagnostics"] = {
+        "output_file": diagnostic_record["output_file"],
+        "columns": diagnostic_record["columns"],
+        "rows": diagnostic_record["rows"],
+        "latest_formation_to_execution": diagnostic_record["latest_formation_to_execution"],
+        "future_o2o_label_used": diagnostic_record["future_o2o_label_used"],
+        "signal_values_filled": diagnostic_record["signal_values_filled"],
+    }
+    (engine_output.parent / "最终执行日简表_生成记录.json").write_text(
+        json.dumps(record, ensure_ascii=False, indent=2, default=_json_default) + "\n",
+        encoding="utf-8",
+    )
+    return record
 
 
 def main() -> None:
