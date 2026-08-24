@@ -1,0 +1,4 @@
+﻿period,one_day_segments,two_day_segments,short_segments,all_segments,short_segment_pct
+Test,13,20,33,92,35.869565217391305
+Train,48,69,117,284,41.19718309859155
+Val,12,25,37,107,34.57943925233645

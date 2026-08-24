@@ -1,3 +1,0 @@
-﻿series,state,segments,holding_days,mean_holding_days,median_holding_days,min_holding_days,max_holding_days,zero_transfer_days
-仅零段反转（0→-1/0→+1）,-1,131,478,3.648854961832061,2.0,1,20,245
-仅零段反转（0→-1/0→+1）,1,112,718,6.410714285714286,4.0,1,33,312

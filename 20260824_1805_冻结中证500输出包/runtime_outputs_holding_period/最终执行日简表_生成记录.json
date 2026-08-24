@@ -1,0 +1,72 @@
+{
+  "operation": "只用远端现货和包内冻结参数生成八列表；不读取本地参考，不做比较",
+  "spot_path": "/Users/hzy/Desktop/0817合并查看/99_中间归档/本地数据快照_不入库/_rq_latest_20260824_1750/CSI500_SPOT_md_eod_raw_RQ_20260817.parquet",
+  "engine_output_dir": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_holding_period/_engine_outputs",
+  "output_path": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_holding_period/最终执行日简表.csv",
+  "columns": [
+    "实际执行日",
+    "三状态",
+    "+1反转",
+    "-1反转",
+    "0转-1",
+    "0转+1",
+    "大涨",
+    "大跌"
+  ],
+  "rows": 2097,
+  "date_min": "2018-01-03",
+  "date_max": "2026-08-25",
+  "freeze": {
+    "minus_exit": {
+      "version": "V55",
+      "threshold": 0.815842643776842,
+      "confirm_days": 2,
+      "min_state_age": 1
+    },
+    "plus_exit": {
+      "version": "V80",
+      "threshold": 0.4920211306764882,
+      "confirm_days": 1,
+      "min_state_age": 5
+    },
+    "big_down": {
+      "version": "V156",
+      "candidate": "base_0621",
+      "threshold": 0.6832148298881413
+    },
+    "big_up": {
+      "version": "V189",
+      "candidate": "base_1839",
+      "threshold": 0.8135114753699175
+    },
+    "zero_transfer_down": {
+      "version": "V38",
+      "candidate": "V38_down_s01_a1_q0.85_c1_H03",
+      "threshold": 1.2294466376933055,
+      "release_threshold": 0.6645986031220402
+    },
+    "zero_transfer_up": {
+      "version": "V57",
+      "candidate": "V57_up_s01_a1_q0.85_c1_H04",
+      "threshold": 4.671980676328502,
+      "release_threshold": 4.606280193236715
+    }
+  },
+  "execution_date_rule": "每行均为形成日收盘后的计算结果；实际执行日是下一实际现货交易日；最新形成日尚无下一现货行时按下一工作日映射，数值仍来自最新形成日计算",
+  "date_mapping": {
+    "verified": true,
+    "formation_date_min": "2018-01-02",
+    "formation_date_max": "2026-08-24",
+    "execution_date_min": "2018-01-03",
+    "execution_date_max": "2026-08-25",
+    "latest_formation_to_execution": "2026-08-24 -> 2026-08-25",
+    "nonzero_grid_exact": true,
+    "extreme_formation_to_execution_exact": true,
+    "zero_transfer_formation_to_execution_exact": true,
+    "missing_signal_values_filled": false
+  },
+  "extreme_prediction_input": "remote_up_extreme_predictions.csv / remote_down_extreme_predictions.csv",
+  "zero_transfer_prediction_input": "remote_zero_transfer_predictions.csv",
+  "candidate_rebuild": false,
+  "comparison_performed": false
+}

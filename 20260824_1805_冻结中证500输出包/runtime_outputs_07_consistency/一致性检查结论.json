@@ -1,0 +1,12 @@
+{
+  "operation": "比较当前远端运行输出与包内本地结果对照；不读取远端基准文件，不生成信号",
+  "package_root": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包",
+  "reference_root": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/本地结果对照",
+  "output_dir": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_07_consistency",
+  "table_count": 17,
+  "pass_count": 17,
+  "failed_tables": [],
+  "success": true,
+  "summary_path": "/Users/hzy/Desktop/0817合并查看/20260824_1805_冻结中证500输出包/runtime_outputs_07_consistency/一致性检查摘要.csv",
+  "rule": "日期、列名、行数完全一致；数值允许绝对误差1e-8和相对误差1e-10；缺失或不同截点不算一致"
+}
