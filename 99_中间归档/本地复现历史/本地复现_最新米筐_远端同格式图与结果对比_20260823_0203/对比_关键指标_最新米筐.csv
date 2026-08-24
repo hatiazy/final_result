@@ -1,0 +1,19 @@
+﻿series,metric,remote_value,local_value,local_minus_remote,comparison
+Raw 1545,total_return_pct,143.76,143.76191259256404,0.001912592564053739,一致（四舍五入/同口径）
+Raw 1545,annualized_additive_return_pct,17.3,17.300860541225465,0.0008605412254638622,一致（四舍五入/同口径）
+Raw 1545,annualized_volatility_pct,15.05,15.05626198898638,0.006261988986379308,一致（四舍五入/同口径）
+Raw 1545,sharpe,1.15,1.1490807315840414,-0.000919268415958463,一致（四舍五入/同口径）
+Raw 1545,active_days,639.0,639.0,0.0,一致（四舍五入/同口径）
+Raw 1545,winning_directional_days,353.0,353.0,0.0,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),total_return_pct,283.16,283.15700354034357,-0.002996459656458228,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),annualized_additive_return_pct,34.08,34.07620099912446,-0.0037990008755386384,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),annualized_volatility_pct,17.78,17.78835606219628,0.008356062196277492,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),sharpe,1.92,1.9156464419746475,-0.004353558025352422,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),active_days,1088.0,1088.0,0.0,一致（四舍五入/同口径）
+Adj 1545 (+4 Reversal),winning_directional_days,608.0,608.0,0.0,一致（四舍五入/同口径）
+CSI500 Buy & Hold,total_return_pct,44.88,44.87766273750522,-0.0023372624947839427,一致（四舍五入/同口径）
+CSI500 Buy & Hold,annualized_additive_return_pct,5.4,5.400750243482003,0.0007502434820025883,一致（四舍五入/同口径）
+CSI500 Buy & Hold,annualized_volatility_pct,24.03,24.038920688046208,0.008920688046206493,一致（四舍五入/同口径）
+CSI500 Buy & Hold,sharpe,0.22,0.2246669188507962,0.004666918850796203,一致（四舍五入/同口径）
+CSI500 Buy & Hold,active_days,2094.0,2094.0,0.0,一致（四舍五入/同口径）
+CSI500 Buy & Hold,winning_directional_days,1082.0,1082.0,0.0,一致（四舍五入/同口径）

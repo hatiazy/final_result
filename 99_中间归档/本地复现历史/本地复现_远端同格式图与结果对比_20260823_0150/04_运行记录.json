@@ -1,0 +1,29 @@
+{
+  "stage": "04_returns_and_segment_counts",
+  "spot_path": "/Users/hzy/Desktop/0817合并查看/03_汇报版本/20260818_1024_05汇报_基础三状态非零退出大涨大跌版/数据源/米筐_中证500_现货_20260818.parquet",
+  "holding_eight_path": "/Users/hzy/Desktop/0817合并查看/_tmp_hold_test/output_rerun/含持有期八列表.csv",
+  "rows": 2092,
+  "o2o_evaluable_rows": 2090,
+  "raw_active_days": 639,
+  "adjusted_active_days": 1086,
+  "latest_execution_date": "2026-08-18",
+  "latest_formation_date": "2026-08-17",
+  "latest_row_has_next_open": false,
+  "return_rule": "execution open to next actual trading open; additive NAV=1+cumsum(position*O2O)",
+  "no_placeholder_values": true,
+  "generated_files": [
+    "04_原始与调整_净值对比.png",
+    "04_原始与调整_超额净值对比.png",
+    "04_原始与调整_风险指标对比.png",
+    "04_调整相对原始_超额收益.png",
+    "11_原始与调整_风险指标对比.png",
+    "12_原始与调整_净值对比.png",
+    "13_原始与调整_超额净值对比.png",
+    "14_调整相对原始_超额收益.png",
+    "O2O加算逐日收益与状态.csv",
+    "O2O加算风险指标.csv",
+    "年度段计数与信号计数_原始.csv",
+    "持有段明细.csv",
+    "持有段计数_按系列.csv"
+  ]
+}

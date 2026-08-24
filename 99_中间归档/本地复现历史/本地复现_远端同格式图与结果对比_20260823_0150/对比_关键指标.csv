@@ -1,0 +1,19 @@
+﻿series,metric,remote_value,local_value,local_minus_remote,comparison
+Raw 1545,total_return_pct,143.76,143.76191259256404,0.001912592564053739,数值接近；本地现货截止日不同
+Raw 1545,annualized_additive_return_pct,17.3,17.33397223604121,0.03397223604120825,数值接近；本地现货截止日不同
+Raw 1545,annualized_volatility_pct,15.05,15.070594297874065,0.020594297874064083,数值接近；本地现货截止日不同
+Raw 1545,sharpe,1.15,1.1501850486736562,0.00018504867365631839,数值接近；本地现货截止日不同
+Raw 1545,active_days,639.0,639.0,0.0,完全一致
+Raw 1545,winning_directional_days,353.0,353.0,0.0,完全一致
+Adj 1545 (+4 Reversal),total_return_pct,283.16,283.4663682144169,0.3063682144168638,数值接近；本地现货截止日不同
+Adj 1545 (+4 Reversal),annualized_additive_return_pct,34.08,34.178719995231134,0.09871999523113573,数值接近；本地现货截止日不同
+Adj 1545 (+4 Reversal),annualized_volatility_pct,17.78,17.77809228496744,-0.0019077150325621517,数值接近；本地现货截止日不同
+Adj 1545 (+4 Reversal),sharpe,1.92,1.92251898839177,0.002518988391770005,数值接近；本地现货截止日不同
+Adj 1545 (+4 Reversal),active_days,1088.0,1086.0,-2.0,本地现货截止日不同
+Adj 1545 (+4 Reversal),winning_directional_days,608.0,607.0,-1.0,本地现货截止日不同
+CSI500 Buy & Hold,total_return_pct,44.88,47.28776051819854,2.407760518198536,需同一截止日再复跑
+CSI500 Buy & Hold,annualized_additive_return_pct,5.4,5.7016821294670015,0.3016821294670011,数值接近；本地现货截止日不同
+CSI500 Buy & Hold,annualized_volatility_pct,24.03,24.03017204957357,0.00017204957356753425,数值接近；本地现货截止日不同
+CSI500 Buy & Hold,sharpe,0.22,0.2372717980422525,0.017271798042252512,数值接近；本地现货截止日不同
+CSI500 Buy & Hold,active_days,2094.0,2090.0,-4.0,本地现货截止日不同
+CSI500 Buy & Hold,winning_directional_days,1082.0,1081.0,-1.0,本地现货截止日不同

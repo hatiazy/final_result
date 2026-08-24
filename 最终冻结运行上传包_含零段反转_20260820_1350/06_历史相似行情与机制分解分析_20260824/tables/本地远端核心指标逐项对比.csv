@@ -1,0 +1,19 @@
+﻿series,metric,local_value,remote_reference,absolute_difference,pass
+Raw 1545,total_return_pct,143.76191259256404,143.76,0.001912592564053739,True
+Raw 1545,annualized_additive_return_pct,17.300860541225465,17.3,0.0008605412254638622,True
+Raw 1545,annualized_volatility_pct,15.05626198898638,15.05,0.006261988986379308,True
+Raw 1545,sharpe,1.1490807315840414,1.15,0.000919268415958463,True
+Raw 1545,active_days,639.0,639.0,0.0,True
+Raw 1545,winning_directional_days,353.0,353.0,0.0,True
+Adj 1545 (+4 Reversal),total_return_pct,283.15700354034357,283.16,0.002996459656458228,True
+Adj 1545 (+4 Reversal),annualized_additive_return_pct,34.07620099912446,34.08,0.0037990008755386384,True
+Adj 1545 (+4 Reversal),annualized_volatility_pct,17.78835606219628,17.78,0.008356062196277492,True
+Adj 1545 (+4 Reversal),sharpe,1.9156464419746477,1.92,0.0043535580253522,True
+Adj 1545 (+4 Reversal),active_days,1088.0,1088.0,0.0,True
+Adj 1545 (+4 Reversal),winning_directional_days,608.0,608.0,0.0,True
+CSI500 Buy & Hold,total_return_pct,44.87766273750522,44.88,0.0023372624947839427,True
+CSI500 Buy & Hold,annualized_additive_return_pct,5.400750243482003,5.4,0.0007502434820025883,True
+CSI500 Buy & Hold,annualized_volatility_pct,24.038920688046208,24.03,0.008920688046206493,True
+CSI500 Buy & Hold,sharpe,0.2246669188507962,0.22,0.004666918850796203,True
+CSI500 Buy & Hold,active_days,2094.0,2094.0,0.0,True
+CSI500 Buy & Hold,winning_directional_days,1082.0,1082.0,0.0,True
