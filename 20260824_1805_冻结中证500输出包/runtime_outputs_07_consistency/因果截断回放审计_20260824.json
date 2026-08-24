@@ -1,0 +1,25 @@
+{
+  "audit_type": "causal_truncation_replay",
+  "full_spot_date_max": "2026-08-24",
+  "truncated_spot_date_max": "2026-08-21",
+  "new_spot_rows_in_full_input": 1,
+  "comparison_scope": "共同执行日截至 2026-08-24",
+  "common_execution_rows_compared": 2096,
+  "compact_columns_compared": [
+    "三状态",
+    "+1反转",
+    "-1反转",
+    "0转-1",
+    "0转+1",
+    "大涨",
+    "大跌"
+  ],
+  "different_cells": 0,
+  "different_rows": 0,
+  "conclusion": "加入 2026-08-24 现货后，2026-08-24 及之前的八列结果未发生变化；新增数据只用于 2026-08-25 执行日信号。",
+  "latest_signal_chain": "2026-08-24 收盘形成 -> 2026-08-25 开盘执行",
+  "latest_signal_values_are_present": true,
+  "missing_signal_values_filled": false,
+  "future_o2o_label_used_for_signal": false,
+  "note": "如果数据供应商事后修订历史现货本身，任何因果算法都可能随修订后的输入变化；本审计验证的是新增交易日不会回写既有历史结果。"
+}
