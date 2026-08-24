@@ -38,7 +38,10 @@ plt.rcParams["axes.unicode_minus"] = False
 
 from reproduce_remote_o2o import (
     SIGNAL_COLUMNS,
+    STATE_MARKER_SHAPES,
+    _add_state_marker_legend,
     _load_engine_panel,
+    _plot_curve_with_execution_points,
     build_execution_frame,
     build_risk_summary,
     read_holding_eight,
@@ -593,6 +596,18 @@ def build_teacher_red_window_analysis(
         base_zero_to_direction = int((base_state.eq(0) & adjusted_state.ne(0)).sum())
         base_direction_to_zero = int((base_state.ne(0) & adjusted_state.eq(0)).sum())
         conflict_days = int(window["调整原因"].astype(str).str.contains("冲突", na=False).sum())
+        zero_to_down = base_state.eq(0) & adjusted_state.eq(-1)
+        zero_to_up = base_state.eq(0) & adjusted_state.eq(1)
+        direction_to_zero = base_state.ne(0) & adjusted_state.eq(0)
+        zero_to_down_pct = float(window.loc[zero_to_down, "调整策略日收益"].sum() * 100.0)
+        zero_to_up_pct = float(window.loc[zero_to_up, "调整策略日收益"].sum() * 100.0)
+        direction_to_zero_delta_pct = float(
+            (window.loc[direction_to_zero, "调整策略日收益"] - window.loc[direction_to_zero, "原始策略日收益"]).sum()
+            * 100.0
+        )
+        adjustment_delta_pct = float(
+            (window["调整策略日收益"] - window["原始策略日收益"]).sum() * 100.0
+        )
         if adjusted_zero_days < base_zero_days:
             analysis = (
                 f"反转层把基础0中的{base_zero_to_direction}个执行日转为方向状态；"
@@ -608,6 +623,12 @@ def build_teacher_red_window_analysis(
                 f"基础0中有{base_zero_to_direction}个执行日被反转层识别为方向，"
                 f"但有{base_direction_to_zero}个原方向退出日被中和，0状态天数净变化为0。"
             )
+        analysis += (
+            f"其中0→-1共{int(zero_to_down.sum())}天、区间加算贡献{zero_to_down_pct:+.2f}%；"
+            f"0→+1共{int(zero_to_up.sum())}天、区间加算贡献{zero_to_up_pct:+.2f}%；"
+            f"原方向→0的调整差额为{direction_to_zero_delta_pct:+.2f}个百分点，"
+            f"调整相对基础的总差额为{adjustment_delta_pct:+.2f}个百分点。"
+        )
 
         summary_rows.append(
             {
@@ -623,6 +644,10 @@ def build_teacher_red_window_analysis(
                 "基础O2O加算收益_pct": float(window["原始策略日收益"].sum() * 100.0),
                 "加入四反转O2O加算收益_pct": float(window["调整策略日收益"].sum() * 100.0),
                 "普通指数O2O加算收益_pct": float(window["指数日收益"].sum() * 100.0),
+                "0转-1_O2O加算贡献_pct": zero_to_down_pct,
+                "0转+1_O2O加算贡献_pct": zero_to_up_pct,
+                "原方向转0_调整差额_pct": direction_to_zero_delta_pct,
+                "调整相对基础差额_pct": adjustment_delta_pct,
                 "基础状态切换次数": _transition_count(base_state),
                 "加入四反转状态切换次数": _transition_count(adjusted_state),
                 "0转-1信号天数": int(pd.to_numeric(window["0转-1"], errors="coerce").sum()),
@@ -644,12 +669,25 @@ def build_teacher_red_window_analysis(
         ("局部加入四反转_NAV", "加入四个反转（Adj 1545）", "#e87922"),
         ("局部普通指数_NAV", "普通指数（CSI500 O2O）", "#333333"),
     ]
+    state_specs = {
+        "局部原始三状态_NAV": [("原始状态", STATE_MARKER_SHAPES["raw"])],
+        "局部加入四反转_NAV": [("调整后三状态", STATE_MARKER_SHAPES["adjusted"])],
+        "局部普通指数_NAV": [],
+    }
 
     def plot_window(window_id: str, path: Path, title_suffix: str = "") -> None:
         data = daily.loc[daily["老师区间"].eq(window_id)].copy()
         fig, ax = plt.subplots(figsize=(13.5, 5.4), dpi=150)
         for column, label, color in line_specs:
-            ax.plot(data["实际执行日"], data[column], label=label, color=color, linewidth=1.5 if column != "局部普通指数_NAV" else 1.15)
+            _plot_curve_with_execution_points(
+                ax,
+                data["实际执行日"],
+                data[column],
+                label,
+                color,
+                state_specs=[(data[state_column], marker) for state_column, marker in state_specs[column]],
+                linewidth=1.5 if column != "局部普通指数_NAV" else 1.15,
+            )
         ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
         row = summary.loc[summary["老师区间"].eq(window_id)].iloc[0]
         ax.set_title(
@@ -661,7 +699,7 @@ def build_teacher_red_window_analysis(
         )
         ax.set_ylabel("Additive O2O NAV")
         ax.set_xlabel("Execution date")
-        ax.legend(ncol=3, fontsize=9, loc="best")
+        _add_state_marker_legend(ax, ncol=3, loc="best")
         ax.grid(alpha=0.24)
         ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
@@ -676,7 +714,15 @@ def build_teacher_red_window_analysis(
         data = daily.loc[daily["老师区间"].eq(spec["window_id"])].copy()
         row = summary.loc[summary["老师区间"].eq(spec["window_id"])].iloc[0]
         for column, label, color in line_specs:
-            ax.plot(data["实际执行日"], data[column], label=label, color=color, linewidth=1.45 if column != "局部普通指数_NAV" else 1.1)
+            _plot_curve_with_execution_points(
+                ax,
+                data["实际执行日"],
+                data[column],
+                label,
+                color,
+                state_specs=[(data[state_column], marker) for state_column, marker in state_specs[column]],
+                linewidth=1.45 if column != "局部普通指数_NAV" else 1.1,
+            )
         ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
         ax.set_title(
             f"{spec['window_id']}：{data['实际执行日'].min():%Y-%m-%d}—{data['实际执行日'].max():%Y-%m-%d}；"
@@ -689,7 +735,7 @@ def build_teacher_red_window_analysis(
         ax.xaxis.set_major_locator(mdates.MonthLocator(interval=1))
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
         if ax is axes[0]:
-            ax.legend(ncol=3, fontsize=9, loc="best")
+            _add_state_marker_legend(ax, ncol=3, loc="best")
     axes[-1].set_xlabel("Execution date")
     fig.suptitle(
         "老师红色0区间局部复盘：基础三状态、加入四个反转和普通指数\n"
@@ -879,7 +925,7 @@ def _write_report(
         teacher_lines = [
             "## 五、老师红色0区间逐段复盘",
             "",
-            "以下三个窗口按老师提供的红框时间范围对齐。图中的三条曲线全部采用与04全时期图相同的执行日O2O口径：执行日开盘到下一实际交易日开盘，收益按加法累计，不复利。每个局部窗口仅将首日NAV重新设为1，便于比较，不改变任何日收益。",
+            "以下三个窗口按老师提供的红框时间范围对齐。图中的三条曲线全部采用与04全时期图相同的执行日O2O口径：执行日开盘到下一实际交易日开盘，收益按加法累计，不复利。每个局部窗口仅将首日NAV重新设为1，便于比较，不改变任何日收益。每个点对应一个真实执行日；颜色表示执行日状态（-1绿色、0蓝色、+1红色），圆点是初始三状态，方点是调整后三状态。",
             "",
             "老师红框边界（按图片坐标人工记录，作为固定诊断窗口）：",
             "",
@@ -893,7 +939,7 @@ def _write_report(
         ]
         for row in teacher_summary.itertuples(index=False):
             teacher_lines.append(f"- {row.老师区间}（{row.实际执行日范围}）：{row.区间解释}")
-        teacher_lines.extend(["", "图中蓝线是基础三状态，橙线是加入四个反转后的最终状态，黑线是普通指数的O2O加算基准。红色区间的核心判断不再只看段数，而是同时看0状态覆盖天数、方向覆盖天数和三条O2O曲线。", ""])
+        teacher_lines.extend(["", "图中蓝线是基础三状态，橙线是加入四个反转后的最终状态，黑线是普通指数的O2O加算基准。曲线上每天都有执行日点：颜色对应-1/0/+1，圆点对应初始三状态，方点对应调整后三状态。红色区间的核心判断不再只看段数，而是同时看0状态覆盖天数、方向覆盖天数和三条O2O曲线。", ""])
         for name in teacher_analysis["figure_names"]:
             teacher_lines.append(f"![{name}](<{(figures / name).resolve()}>)")
             teacher_lines.append("")

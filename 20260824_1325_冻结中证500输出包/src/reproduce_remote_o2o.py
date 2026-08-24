@@ -32,6 +32,7 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.lines import Line2D
 
 
 SIGNAL_COLUMNS = [
@@ -44,6 +45,26 @@ SIGNAL_COLUMNS = [
     "大涨",
     "大跌",
 ]
+
+
+# Execution-date state markers used on every P&L/NAV curve.  The line colour
+# identifies the curve (raw, adjusted, or index); the point colour identifies
+# the actual execution-date position.  The marker shape distinguishes the
+# initial frozen three-state output from the adjusted three-state path.
+STATE_MARKER_COLORS = {
+    -1: "#2ca25f",  # green: short
+    0: "#2f6db0",   # blue: flat
+    1: "#d73027",   # red: long
+}
+STATE_MARKER_LABELS = {
+    -1: "-1（绿色）",
+    0: "0（蓝色）",
+    1: "+1（红色）",
+}
+STATE_MARKER_SHAPES = {
+    "raw": "o",       # initial/base three-state
+    "adjusted": "s",  # adjusted/final three-state
+}
 
 
 def _parse_dates(values: pd.Series) -> pd.Series:
@@ -291,6 +312,123 @@ def build_execution_frame(spot_path: str | Path, holding_path: str | Path) -> pd
         frame.loc[valid, "调整策略日收益"] - frame.loc[valid, "原始策略日收益"]
     ).cumsum()
     return frame
+
+
+def _state_specs_for_curve(column: str, frame: pd.DataFrame) -> list[tuple[pd.Series, str]]:
+    """Return execution-date state series and marker shapes for a P&L curve.
+
+    Ordinary raw/adjusted curves carry their corresponding state.  The
+    relative adjusted-minus-raw curve is a comparison curve, so both state
+    paths are marked on the same daily P&L trajectory.
+    """
+
+    if column in {"原始净值", "原始超额净值"}:
+        return [(frame["原始状态"], STATE_MARKER_SHAPES["raw"])]
+    if column in {"调整净值", "调整超额净值"}:
+        return [(frame["调整后三状态"], STATE_MARKER_SHAPES["adjusted"])]
+    if column == "调整相对原始净值":
+        return [
+            (frame["原始状态"], STATE_MARKER_SHAPES["raw"]),
+            (frame["调整后三状态"], STATE_MARKER_SHAPES["adjusted"]),
+        ]
+    return []
+
+
+def _plot_state_markers(
+    ax: Any,
+    dates: Any,
+    values: Any,
+    states: Any,
+    marker: str,
+    size: float = 14.0,
+) -> None:
+    """Put one coloured point on every valid execution-date observation."""
+
+    x = pd.Series(dates).reset_index(drop=True)
+    y = pd.to_numeric(pd.Series(values).reset_index(drop=True), errors="coerce")
+    s = pd.to_numeric(pd.Series(states).reset_index(drop=True), errors="coerce")
+    valid = x.notna() & y.notna() & s.isin([-1, 0, 1])
+    for state, color in STATE_MARKER_COLORS.items():
+        mask = valid & s.eq(state)
+        if not mask.any():
+            continue
+        ax.scatter(
+            x.loc[mask],
+            y.loc[mask],
+            s=size,
+            marker=marker,
+            color=color,
+            edgecolors="white",
+            linewidths=0.35,
+            alpha=0.92,
+            zorder=5,
+        )
+
+
+def _plot_curve_with_execution_points(
+    ax: Any,
+    dates: Any,
+    values: Any,
+    label: str,
+    color: str,
+    state_specs: list[tuple[pd.Series, str]] | None = None,
+    linewidth: float = 1.15,
+    linestyle: str = "-",
+) -> None:
+    """Draw a curve and daily execution-date points.
+
+    Strategy curves use state-coloured markers.  A benchmark or other curve
+    without a state path still receives a small point at every day so that
+    no P&L trajectory silently hides the daily observations.
+    """
+
+    x = pd.Series(dates).reset_index(drop=True)
+    y = pd.to_numeric(pd.Series(values).reset_index(drop=True), errors="coerce")
+    ax.plot(x, y, linewidth=linewidth, linestyle=linestyle, label=label, color=color)
+    specs = state_specs or []
+    if specs:
+        for states, marker in specs:
+            _plot_state_markers(ax, x, y, states, marker)
+    else:
+        valid = x.notna() & y.notna()
+        ax.scatter(x.loc[valid], y.loc[valid], s=8.0, marker=".", color=color, alpha=0.55, zorder=4)
+
+
+def _add_state_marker_legend(ax: Any, ncol: int = 3, loc: str = "upper left") -> None:
+    """Append a compact legend explaining state colours and raw/adjusted shapes."""
+
+    line_handles, line_labels = ax.get_legend_handles_labels()
+    state_handles: list[Line2D] = []
+    state_labels: list[str] = []
+    for marker, title in (
+        (STATE_MARKER_SHAPES["raw"], "初始三状态"),
+        (STATE_MARKER_SHAPES["adjusted"], "调整后三状态"),
+    ):
+        for state in (-1, 0, 1):
+            state_handles.append(
+                Line2D(
+                    [0],
+                    [0],
+                    marker=marker,
+                    linestyle="None",
+                    markerfacecolor=STATE_MARKER_COLORS[state],
+                    markeredgecolor="white",
+                    markeredgewidth=0.35,
+                    markersize=6.5,
+                )
+            )
+            state_labels.append(f"{title} {STATE_MARKER_LABELS[state]}")
+    ax.legend(
+        line_handles + state_handles,
+        line_labels + state_labels,
+        loc=loc,
+        fontsize=8.0,
+        ncol=ncol,
+        framealpha=0.88,
+        borderpad=0.45,
+        columnspacing=0.9,
+        handletextpad=0.4,
+    )
 
 
 def _directional_segments(
@@ -632,7 +770,15 @@ def _plot_nav(frame: pd.DataFrame, output: Path, column_map: list[tuple[str, str
     valid = frame.loc[frame["O2O可评价"]].copy()
     fig, ax = plt.subplots(figsize=(13.2, 5.2), dpi=150)
     for column, label, color in column_map:
-        ax.plot(valid["实际执行日"], valid[column], linewidth=1.15, label=label, color=color)
+        _plot_curve_with_execution_points(
+            ax,
+            valid["实际执行日"],
+            valid[column],
+            label,
+            color,
+            state_specs=_state_specs_for_curve(column, valid),
+            linewidth=1.15,
+        )
     ax.axhline(1.0, color="#666", linewidth=0.55, linestyle=":")
     ax.set_title(title, fontsize=13, weight="bold")
     ax.set_ylabel(ylabel)
@@ -640,7 +786,7 @@ def _plot_nav(frame: pd.DataFrame, output: Path, column_map: list[tuple[str, str
     ax.grid(True, alpha=0.35, linewidth=0.45)
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    ax.legend(loc="upper left", fontsize=9)
+    _add_state_marker_legend(ax, ncol=3, loc="upper left")
     fig.tight_layout()
     fig.savefig(output, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -970,9 +1116,22 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
     full["sf_div"] = col("slow_engine") - col("fast_engine")
     full["neutral_share_252"] = (full["adjusted_state"].fillna(0).eq(0)).rolling(252, min_periods=60).mean() * 100.0
     fig, axes = plt.subplots(5, 1, figsize=(12.2, 10.0), dpi=130, sharex=True)
-    axes[0].plot(full["date"], full["rolling_excess_252"], color="#3aaf79", linewidth=0.8)
+    performance_dates = full["effective_date"] if "effective_date" in full.columns else full["date"]
+    _plot_curve_with_execution_points(
+        axes[0],
+        performance_dates,
+        full["rolling_excess_252"],
+        "Rolling 12m excess",
+        "#3aaf79",
+        state_specs=[
+            (full["raw_state"], STATE_MARKER_SHAPES["raw"]),
+            (full["adjusted_state"], STATE_MARKER_SHAPES["adjusted"]),
+        ],
+        linewidth=0.8,
+    )
     axes[0].axhline(0, color="#666", linewidth=0.6)
-    axes[0].set_ylabel("Rolling 12m\nExcess %")
+    axes[0].set_ylabel("Rolling 12m\nExcess %\n(execution date)")
+    _add_state_marker_legend(axes[0], ncol=3, loc="upper left")
     axes[1].plot(full["date"], full["axis_std_252"], color="#4c8bf5", linewidth=0.8)
     axes[1].axhline(0.28, color="#e57373", linestyle=":", linewidth=0.7)
     axes[1].set_ylabel("Axis std")
@@ -1094,19 +1253,70 @@ def _write_2026_analysis(frame: pd.DataFrame, output_dir: Path) -> dict[str, Any
         year.to_csv(output_dir / "2026_逐日表现分解.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
 
         fig, axes = plt.subplots(3, 1, figsize=(12.5, 8.2), dpi=140, sharex=True, gridspec_kw={"height_ratios": [1.0, 1.0, 0.65]})
-        axes[0].plot(year["实际执行日"], year["原始策略日收益"] * 100.0, color="#f58518", linewidth=0.8, label="Raw daily O2O return %")
-        axes[0].plot(year["实际执行日"], year["调整策略日收益"] * 100.0, color="#d62728", linewidth=0.8, label="Adj daily O2O return %")
-        axes[0].plot(year["实际执行日"], year["指数日收益"] * 100.0, color="#4285f4", linewidth=0.65, alpha=0.7, label="Index O2O return %")
+        _plot_curve_with_execution_points(
+            axes[0],
+            year["实际执行日"],
+            year["原始策略日收益"] * 100.0,
+            "Raw daily O2O return %",
+            "#f58518",
+            state_specs=[(year["原始状态"], STATE_MARKER_SHAPES["raw"])],
+            linewidth=0.8,
+        )
+        _plot_curve_with_execution_points(
+            axes[0],
+            year["实际执行日"],
+            year["调整策略日收益"] * 100.0,
+            "Adj daily O2O return %",
+            "#d62728",
+            state_specs=[(year["调整后三状态"], STATE_MARKER_SHAPES["adjusted"])],
+            linewidth=0.8,
+        )
+        _plot_curve_with_execution_points(
+            axes[0],
+            year["实际执行日"],
+            year["指数日收益"] * 100.0,
+            "Index O2O return %",
+            "#4285f4",
+            linewidth=0.65,
+        )
         axes[0].axhline(0, color="#666", linewidth=0.55)
         axes[0].set_ylabel("Daily %")
-        axes[0].legend(fontsize=8, loc="upper left")
-        axes[1].plot(year["实际执行日"], year["raw_nav_2026"], color="#f58518", label="Raw NAV")
-        axes[1].plot(year["实际执行日"], year["adjusted_nav_2026"], color="#d62728", label="Adj NAV")
-        axes[1].plot(year["实际执行日"], year["index_nav_2026"], color="#4285f4", label="Index NAV")
-        axes[1].plot(year["实际执行日"], year["adjusted_excess_2026"], color="#2ca02c", linestyle="--", label="Adj Excess NAV")
+        _add_state_marker_legend(axes[0], ncol=3, loc="upper left")
+        _plot_curve_with_execution_points(
+            axes[1],
+            year["实际执行日"],
+            year["raw_nav_2026"],
+            "Raw NAV",
+            "#f58518",
+            state_specs=[(year["原始状态"], STATE_MARKER_SHAPES["raw"])],
+        )
+        _plot_curve_with_execution_points(
+            axes[1],
+            year["实际执行日"],
+            year["adjusted_nav_2026"],
+            "Adj NAV",
+            "#d62728",
+            state_specs=[(year["调整后三状态"], STATE_MARKER_SHAPES["adjusted"])],
+        )
+        _plot_curve_with_execution_points(
+            axes[1],
+            year["实际执行日"],
+            year["index_nav_2026"],
+            "Index NAV",
+            "#4285f4",
+        )
+        _plot_curve_with_execution_points(
+            axes[1],
+            year["实际执行日"],
+            year["adjusted_excess_2026"],
+            "Adj Excess NAV",
+            "#2ca02c",
+            state_specs=[(year["调整后三状态"], STATE_MARKER_SHAPES["adjusted"])],
+            linestyle="--",
+        )
         axes[1].axhline(1.0, color="#666", linewidth=0.55, linestyle=":")
         axes[1].set_ylabel("2026 NAV")
-        axes[1].legend(fontsize=8, loc="upper left")
+        _add_state_marker_legend(axes[1], ncol=3, loc="upper left")
         axes[2].set_ylim(-1.05, 1.05)
         axes[2].set_yticks([-1, 0, 1], labels=["Short", "Flat", "Long"])
         _state_background(axes[2], year["实际执行日"].reset_index(drop=True), year["调整后三状态"].reset_index(drop=True))

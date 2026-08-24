@@ -1,0 +1,7 @@
+﻿check,value,pass
+local event signal values vs freeze reference on common dates,0 mismatches / 2096 rows,True
+03 holding path is intentionally expanded from event signals,not compared cell-for-cell,True
+04 state/date output matches regenerated execution frame,True,True
+local core metrics vs remote reference,18/18 metrics within tolerance,True
+latest row has real signal values,2026-08-21 -> 2026-08-24,True
+signal generation uses no future labels,metadata/engine boundary,True
