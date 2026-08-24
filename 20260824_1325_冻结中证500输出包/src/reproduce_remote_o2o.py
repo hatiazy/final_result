@@ -368,6 +368,157 @@ def build_holding_duration_distribution(segments: pd.DataFrame) -> pd.DataFrame:
     return result[["state", "state_label", "holding_days", "segments", "total_days"]]
 
 
+def build_final_state_duration_distribution(segments: pd.DataFrame) -> pd.DataFrame:
+    """Exact holding-duration distribution for the final four-reversal state."""
+
+    final_segments = segments.loc[segments["series"].eq("Adj 1545")].copy()
+    return build_holding_duration_distribution(final_segments)
+
+
+def build_short_final_state_segments(frame: pd.DataFrame) -> pd.DataFrame:
+    """Explain every one- or two-day segment in the final adjusted state.
+
+    The dates are execution dates.  Formation dates and the daily adjustment
+    reasons are carried in so that a short segment can be attributed to an
+    exit event, a zero-transfer holding path, a same-day conflict, or a short
+    base-state run rather than being treated as an unexplained artifact.
+    """
+
+    segments = build_segments(frame).loc[lambda data: data["series"].eq("Adj 1545")].copy()
+    segments["previous_state"] = segments["state"].shift(1)
+    segments["next_state"] = segments["state"].shift(-1)
+    work = frame.copy()
+    work["_adj_run_id"] = work["调整后三状态"].ne(work["调整后三状态"].shift()).cumsum()
+    signal_columns = ["+1反转", "-1反转", "0转-1", "0转+1", "大涨", "大跌"]
+    rows: list[dict[str, Any]] = []
+
+    for _, segment in segments.loc[segments["holding_days"].isin([1, 2])].iterrows():
+        group = work.loc[work["_adj_run_id"].eq(segment["run_id"])].copy()
+        reasons = group["调整原因"].astype(str).tolist()
+        reason_set = set(reasons)
+        state = int(segment["state"])
+        if state == 0:
+            if reason_set.intersection({"-1退出到0", "+1退出到0"}):
+                mechanism = "退出反转切出的0段"
+            elif "零段同日冲突置0" in reason_set:
+                mechanism = "0转-1与0转+1同日冲突置0"
+            elif "基础0" in reason_set:
+                mechanism = "基础0短段"
+            else:
+                mechanism = "其他0段"
+        elif state == -1:
+            mechanism = "0转-1持有路径短段" if "0转-1持有" in reason_set else "基础-1短段"
+        elif state == 1:
+            mechanism = "0转+1持有路径短段" if "0转+1持有" in reason_set else "基础+1短段"
+        else:
+            raise ValueError(f"非法调整后三状态：{state}")
+
+        row: dict[str, Any] = {
+            "series": "Adj 1545",
+            "run_id": int(segment["run_id"]),
+            "state": state,
+            "state_label": {-1: "-1", 0: "0", 1: "+1"}[state],
+            "start_date": segment["start_date"],
+            "end_date": segment["end_date"],
+            "start_formation_date": group["推定形成日"].iloc[0],
+            "end_formation_date": group["推定形成日"].iloc[-1],
+            "phase": segment["phase"],
+            "holding_days": int(segment["holding_days"]),
+            "previous_state": int(segment["previous_state"]) if pd.notna(segment["previous_state"]) else None,
+            "next_state": int(segment["next_state"]) if pd.notna(segment["next_state"]) else None,
+            "formation_mechanism": mechanism,
+            "source_detail": "；".join(dict.fromkeys(reasons)),
+            "segment_return": segment["segment_return"],
+            "return_available": bool(segment["return_available"]),
+        }
+        for column in signal_columns:
+            row[f"{column}_days"] = int(pd.to_numeric(group[column], errors="raise").sum())
+        rows.append(row)
+
+    return pd.DataFrame(rows).sort_values(["start_date", "run_id"]).reset_index(drop=True)
+
+
+def build_short_segment_time_summary(short_segments: pd.DataFrame, all_segments: pd.DataFrame, period: str) -> pd.DataFrame:
+    """Summarize one/two-day segments by year, phase, or start month."""
+
+    short = short_segments.copy()
+    all_data = all_segments.loc[all_segments["series"].eq("Adj 1545")].copy()
+    if period == "year":
+        short["period"] = pd.to_datetime(short["start_date"]).dt.year.astype(str)
+        all_data["period"] = pd.to_datetime(all_data["start_date"]).dt.year.astype(str)
+    elif period == "phase":
+        short["period"] = short["phase"].astype(str)
+        all_data["period"] = all_data["phase"].astype(str)
+    elif period == "month":
+        short["period"] = pd.to_datetime(short["start_date"]).dt.to_period("M").astype(str)
+        all_data["period"] = pd.to_datetime(all_data["start_date"]).dt.to_period("M").astype(str)
+    else:
+        raise ValueError(f"不支持的时间汇总口径：{period}")
+
+    total = all_data.groupby("period").size().rename("all_segments")
+    result = (
+        short.groupby("period")
+        .agg(
+            one_day_segments=("holding_days", lambda values: int((values == 1).sum())),
+            two_day_segments=("holding_days", lambda values: int((values == 2).sum())),
+            short_segments=("holding_days", "size"),
+        )
+        .join(total, how="outer")
+        .fillna(0)
+        .reset_index()
+    )
+    result["all_segments"] = result["all_segments"].astype(int)
+    for column in ("one_day_segments", "two_day_segments", "short_segments"):
+        result[column] = result[column].astype(int)
+    result["short_segment_pct"] = np.where(
+        result["all_segments"].gt(0),
+        result["short_segments"].div(result["all_segments"]).mul(100.0),
+        np.nan,
+    )
+    return result.sort_values("period").reset_index(drop=True)
+
+
+def build_short_segment_mechanism_summary(short_segments: pd.DataFrame) -> pd.DataFrame:
+    """Count how one/two-day final segments were formed."""
+
+    return (
+        short_segments.groupby(["holding_days", "state", "state_label", "formation_mechanism"], as_index=False)
+        .agg(segments=("run_id", "size"))
+        .sort_values(["holding_days", "state", "segments"], ascending=[True, True, False])
+        .reset_index(drop=True)
+    )
+
+
+def build_fragmentation_diagnostics(segments: pd.DataFrame, short_segments: pd.DataFrame) -> dict[str, Any]:
+    """Summarize how much fragmentation is structural versus short zero blips."""
+
+    final = segments.loc[segments["series"].eq("Adj 1545")].copy().reset_index(drop=True)
+    short = short_segments.copy()
+    zero_blips = short.loc[
+        short["state"].eq(0)
+        & short["previous_state"].isin([-1, 1])
+        & short["next_state"].eq(short["previous_state"])
+    ]
+    return {
+        "series": "Adj 1545",
+        "all_segments": int(len(final)),
+        "one_day_segments": int((final["holding_days"] == 1).sum()),
+        "two_day_segments": int((final["holding_days"] == 2).sum()),
+        "one_or_two_day_segments": int(final["holding_days"].le(2).sum()),
+        "one_or_two_day_pct": float(final["holding_days"].le(2).mean() * 100.0),
+        "directional_short_segments": int(short["state"].isin([-1, 1]).sum()),
+        "flat_short_segments": int(short["state"].eq(0).sum()),
+        "same_direction_flat_blips_1_or_2_days": int(len(zero_blips)),
+        "same_direction_flat_blips_by_days": {
+            str(days): int((zero_blips["holding_days"] == days).sum()) for days in (1, 2)
+        },
+        "interpretation": (
+            "一日/两日段由退出事件、0转持有路径被基础状态切断、同日上下冲突置0和基础状态短段共同形成；"
+            "不能在不改变冻结状态定义的情况下直接全部合并。"
+        ),
+    }
+
+
 def _annual_rows(frame: pd.DataFrame, state_column: str, return_column: str, name: str) -> pd.DataFrame:
     rows: list[dict[str, Any]] = []
     work = frame.loc[frame["O2O可评价"]].copy()
@@ -983,6 +1134,13 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
     output_dir.mkdir(parents=True, exist_ok=True)
     frame = build_execution_frame(spot_path, holding_path)
     segments = build_segments(frame)
+    final_duration = build_final_state_duration_distribution(segments)
+    short_final = build_short_final_state_segments(frame)
+    short_by_year = build_short_segment_time_summary(short_final, segments, "year")
+    short_by_phase = build_short_segment_time_summary(short_final, segments, "phase")
+    short_by_month = build_short_segment_time_summary(short_final, segments, "month")
+    short_mechanism = build_short_segment_mechanism_summary(short_final)
+    fragmentation = build_fragmentation_diagnostics(segments, short_final)
     zero_only_frame = build_zero_transfer_only_state(frame)
     zero_only_segments = build_zero_transfer_only_segments(frame)
     zero_only_duration = build_holding_duration_distribution(zero_only_segments)
@@ -990,6 +1148,15 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
     annual = build_annual_tables(frame)
     frame.to_csv(output_dir / "O2O加算逐日收益与状态.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     segments.to_csv(output_dir / "持有段明细.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    final_duration.to_csv(output_dir / "最终三状态_持有段天数分布.csv", index=False, encoding="utf-8-sig")
+    short_final.to_csv(output_dir / "最终三状态_一二日段明细.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
+    short_by_year.to_csv(output_dir / "最终三状态_一二日段按年统计.csv", index=False, encoding="utf-8-sig")
+    short_by_phase.to_csv(output_dir / "最终三状态_一二日段按阶段统计.csv", index=False, encoding="utf-8-sig")
+    short_by_month.to_csv(output_dir / "最终三状态_一二日段按月统计.csv", index=False, encoding="utf-8-sig")
+    short_mechanism.to_csv(output_dir / "最终三状态_一二日段形成机制统计.csv", index=False, encoding="utf-8-sig")
+    (output_dir / "最终三状态_碎片诊断.json").write_text(
+        json.dumps(fragmentation, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+    )
     zero_only_frame.to_csv(output_dir / "仅零段反转状态逐日.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     zero_only_segments.to_csv(output_dir / "持有段明细_仅零段反转.csv", index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     zero_only_duration.to_csv(output_dir / "持有段天数分布_仅零段反转.csv", index=False, encoding="utf-8-sig")
@@ -1037,6 +1204,7 @@ def run_stage_04(spot_path: str | Path, holding_path: str | Path, output_dir: st
             "directional_segments": int(zero_only_segments["is_directional"].sum()),
             "directional_days": int(zero_only_segments.loc[zero_only_segments["is_directional"], "holding_days"].sum()),
         },
+        "final_state_fragmentation": fragmentation,
         "no_placeholder_values": True,
         "generated_files": sorted(p.name for p in output_dir.iterdir() if p.is_file()),
     }
@@ -1174,6 +1342,11 @@ __all__ = [
     "build_zero_transfer_only_state",
     "build_zero_transfer_only_segments",
     "build_holding_duration_distribution",
+    "build_final_state_duration_distribution",
+    "build_short_final_state_segments",
+    "build_short_segment_time_summary",
+    "build_short_segment_mechanism_summary",
+    "build_fragmentation_diagnostics",
     "build_execution_frame",
     "run_stage_04",
     "run_stage_05",

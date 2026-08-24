@@ -45,5 +45,30 @@
       "持有段天数分布_仅零段反转.csv",
       "持有段计数_仅零段反转.csv"
     ]
-  }
+  },
+  "final_state_fragmentation": {
+    "series": "Adj 1545",
+    "all_segments": 483,
+    "one_day_segments": 74,
+    "two_day_segments": 113,
+    "one_or_two_day_segments": 187,
+    "one_or_two_day_pct": 38.71635610766045,
+    "directional_short_segments": 104,
+    "flat_short_segments": 83,
+    "same_direction_flat_blips_1_or_2_days": 29,
+    "same_direction_flat_blips_by_days": {
+      "1": 10,
+      "2": 19
+    },
+    "interpretation": "一日/两日段由退出事件、0转持有路径被基础状态切断、同日上下冲突置0和基础状态短段共同形成；不能在不改变冻结状态定义的情况下直接全部合并。"
+  },
+  "final_state_analysis_files": [
+    "最终三状态_持有段天数分布.csv",
+    "最终三状态_一二日段明细.csv",
+    "最终三状态_一二日段按年统计.csv",
+    "最终三状态_一二日段按阶段统计.csv",
+    "最终三状态_一二日段按月统计.csv",
+    "最终三状态_一二日段形成机制统计.csv",
+    "最终三状态_碎片诊断.json"
+  ]
 }
