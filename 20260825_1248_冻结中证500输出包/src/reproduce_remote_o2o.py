@@ -34,6 +34,35 @@ import numpy as np
 import pandas as pd
 from matplotlib.lines import Line2D
 
+# Use a CJK-capable font wherever the host provides one.  The previous
+# default (DejaVu Sans) rendered the Chinese state-marker labels as empty
+# squares in figures 09, 10, 12, 13, 14, and 19.  The ordered fallback list
+# keeps the same code runnable on macOS and the Linux remote desktop without
+# changing any data, signal, or return calculation.
+plt.rcParams["font.sans-serif"] = [
+    "Noto Sans CJK SC",
+    "Source Han Sans CN",
+    "Microsoft YaHei",
+    "SimHei",
+    "Heiti SC",
+    "Hiragino Sans GB",
+    "Arial Unicode MS",
+    "DejaVu Sans",
+]
+# The annual state-summary figures intentionally use a monospace text block
+# for column alignment.  DejaVu Sans Mono has no CJK glyphs, so configure the
+# generic monospace family separately; otherwise Chinese headings become
+# tofu squares even though ordinary legends render correctly.
+plt.rcParams["font.monospace"] = [
+    "Noto Sans Mono CJK SC",
+    "Sarasa Mono SC",
+    "Source Han Mono",
+    "Hiragino Sans GB",
+    "Arial Unicode MS",
+    "DejaVu Sans Mono",
+]
+plt.rcParams["axes.unicode_minus"] = False
+
 
 SIGNAL_COLUMNS = [
     "实际执行日",
