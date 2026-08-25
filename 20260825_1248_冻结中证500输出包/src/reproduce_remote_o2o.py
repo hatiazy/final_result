@@ -1109,11 +1109,24 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
     plt.close(fig)
 
     # Annual engine summary table.
+    #
+    # The performance rows are grouped by execution year.  The earlier
+    # implementation accidentally used ``recent`` (the 2023-focused
+    # diagnostic slice) for the two explanatory engine metrics, which left
+    # 2018--2022 blank even though their returns were included.  Use the full
+    # diagnostic panel and assign formation-day observations to the year of
+    # their next execution date.  This keeps the table's time basis aligned
+    # with the O2O performance columns and makes the explanatory metrics
+    # available for every year.
     rows: list[dict[str, Any]] = []
     for year, group in frame.loc[frame["O2O可评价"]].groupby(frame.loc[frame["O2O可评价"], "实际执行日"].dt.year):
-        eng = recent.loc[recent["date"].dt.year.eq(year)]
-        axis_std = float(col("rule_axis").loc[eng.index].std()) if not eng.empty else np.nan
-        sf_mean = float((col("slow_engine") - col("fast_engine")).loc[eng.index].mean()) if not eng.empty else np.nan
+        effective_year = pd.to_datetime(full_diag["effective_date"], errors="coerce").dt.year
+        eng = full_diag.loc[effective_year.eq(year)].copy()
+        axis = pd.to_numeric(eng.get("rule_axis"), errors="coerce")
+        slow = pd.to_numeric(eng.get("slow_engine"), errors="coerce")
+        fast = pd.to_numeric(eng.get("fast_engine"), errors="coerce")
+        axis_std = float(axis.std()) if axis.notna().any() else np.nan
+        sf_mean = float((slow - fast).mean()) if (slow - fast).notna().any() else np.nan
         if np.isfinite(axis_std) and axis_std > 0.28:
             market_type = "High volatility"
         elif np.isfinite(sf_mean) and sf_mean > 0.03:
