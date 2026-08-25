@@ -1306,8 +1306,10 @@ def _write_2026_nav_comparison(frame: pd.DataFrame, output_dir: Path) -> dict[st
     year["raw_nav_2026"] = 1.0 + year["原始策略日收益"].cumsum()
     year["adjusted_nav_2026"] = 1.0 + year["调整策略日收益"].cumsum()
     year["index_nav_2026"] = 1.0 + year["指数日收益"].cumsum()
-    baseline_date = pd.Timestamp("2026-01-01")
-    plot_dates = pd.concat([pd.Series([baseline_date]), year["实际执行日"]], ignore_index=True)
+    # Use an equally spaced trading-day axis.  Calendar dates would create
+    # visual gaps for weekends and holidays even though every evaluated row
+    # is present.
+    plot_dates = pd.Series(np.arange(len(year) + 1, dtype=float))
     raw_nav = pd.concat([pd.Series([1.0]), year["raw_nav_2026"]], ignore_index=True)
     adjusted_nav = pd.concat([pd.Series([1.0]), year["adjusted_nav_2026"]], ignore_index=True)
     index_nav = pd.concat([pd.Series([1.0]), year["index_nav_2026"]], ignore_index=True)
@@ -1348,10 +1350,16 @@ def _write_2026_nav_comparison(frame: pd.DataFrame, output_dir: Path) -> dict[st
         weight="bold",
     )
     ax.set_ylabel("NAV")
-    ax.set_xlabel("执行日")
+    ax.set_xlabel("交易日序号（2026 年内，起点=0）")
     ax.grid(True, alpha=0.35, linewidth=0.45)
-    ax.xaxis.set_major_locator(mdates.MonthLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    actual_dates = year["实际执行日"].reset_index(drop=True)
+    month_start = actual_dates.dt.to_period("M").ne(actual_dates.dt.to_period("M").shift())
+    month_positions = (actual_dates.index[month_start] + 1).tolist()
+    month_labels = actual_dates.loc[month_start].dt.strftime("%Y-%m").tolist()
+    # The baseline and the first January trading day are adjacent; use one
+    # January label at the baseline and keep the later month labels separate.
+    ax.set_xticks([0] + month_positions[1:])
+    ax.set_xticklabels(month_labels, rotation=35, ha="right")
     ax.tick_params(axis="x", rotation=35)
     _add_state_marker_legend(ax, ncol=3, loc="upper left")
     fig.tight_layout()
