@@ -1,0 +1,62 @@
+{
+  "input_spot": "/Users/hzy/Desktop/0817合并查看/99_中间归档/本地数据快照_不入库/_rq_latest_20260824_1750/CSI500_SPOT_md_eod_raw_RQ_20260817.parquet",
+  "source_event_eight": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_holding_period/最终执行日简表.csv",
+  "output_file": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_holding_period/含持有期八列表.csv",
+  "holding_detail_file": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_holding_period/零段反转持有期明细.csv",
+  "columns": [
+    "实际执行日",
+    "三状态",
+    "+1反转",
+    "-1反转",
+    "0转-1",
+    "0转+1",
+    "大涨",
+    "大跌"
+  ],
+  "date_rule": "formation_date t close -> actual execution date t+1; hold path starts on the execution date",
+  "zero_transfer_policy": "use frozen holding_path, then set the zero-transfer value to 0 when the aligned base three-state is not 0",
+  "same_day_down_up_policy": "not handled; retain both independently generated columns",
+  "same_day_both_one_days": 78,
+  "pending_latest_execution_display": true,
+  "freeze": {
+    "down": {
+      "candidate_id": "V38_down_s01_a1_q0.85_c1_H03",
+      "source_version": "V38",
+      "direction": -1,
+      "holding_package": {
+        "package_id": "H03",
+        "min_hold_days": 3,
+        "max_hold_days": 10,
+        "release_quantile_gap": 0.15,
+        "cooldown_days": 3
+      },
+      "threshold_from_development": 1.2294466376933055,
+      "release_threshold": 0.6645986031220402
+    },
+    "up": {
+      "candidate_id": "V57_up_s01_a1_q0.85_c1_H04",
+      "source_version": "V57",
+      "direction": 1,
+      "holding_package": {
+        "package_id": "H04",
+        "min_hold_days": 5,
+        "max_hold_days": 20,
+        "release_quantile_gap": 0.2,
+        "cooldown_days": 5
+      },
+      "threshold_from_development": 4.671980676328502,
+      "release_threshold": 4.606280193236715
+    }
+  },
+  "counts": {
+    "rows": 2097,
+    "down_event_days": 137,
+    "up_event_days": 86,
+    "down_raw_holding_days": 333,
+    "up_raw_holding_days": 420,
+    "down_conflict_zeroed_days": 9,
+    "up_conflict_zeroed_days": 30,
+    "down_final_one_days": 324,
+    "up_final_one_days": 390
+  }
+}
