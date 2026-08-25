@@ -832,7 +832,7 @@ def _plot_bar_table(risk: pd.DataFrame, output: Path) -> None:
         ax.set_title(label, fontsize=9)
         ax.tick_params(axis="x", labelrotation=40, labelsize=7)
         ax.grid(axis="y", alpha=0.3)
-    fig.suptitle("1545 Raw vs Adjusted (+4 Reversal) vs CSI500: Risk Metrics", fontsize=13, weight="bold")
+    fig.suptitle("1545 原始三状态、调整后三状态（四个反转）与中证500：风险指标", fontsize=13, weight="bold")
     fig.tight_layout()
     fig.savefig(output, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -1046,62 +1046,66 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
     def col(name: str, fallback: float = np.nan) -> pd.Series:
         return pd.to_numeric(recent[name], errors="coerce") if name in recent.columns else pd.Series(fallback, index=recent.index)
 
-    # 15: the same causal engine inputs that are available inside the frozen
-    # package; state colors use execution-day mapping from Notebook 04.
+    # The report uses only the full-cycle diagnostics so that a 2023-focused
+    # chart cannot be mistaken for the complete historical mechanism view.
+    full_diag = panel.loc[date.ge(pd.Timestamp("2018-01-01"))].copy()
+    full_diag["date"] = pd.to_datetime(full_diag["date"])
+
+    def full_col(name: str, fallback: float = np.nan) -> pd.Series:
+        return pd.to_numeric(full_diag[name], errors="coerce") if name in full_diag.columns else pd.Series(fallback, index=full_diag.index)
+
     fig, axes = plt.subplots(5, 1, figsize=(12.5, 10.0), dpi=130, sharex=True, gridspec_kw={"height_ratios": [1.0, 1.2, 1.2, 0.85, 0.85]})
-    axes[0].plot(recent["date"], col("close"), color="#4f8bd6", linewidth=0.9)
+    axes[0].plot(full_diag["date"], full_col("close"), color="#4f8bd6", linewidth=0.9)
     axes[0].set_ylabel("CSI500 Close")
-    axes[1].plot(recent["date"], col("rule_axis"), label="rule_axis", color="#d9534f", linewidth=0.8)
-    axes[1].plot(recent["date"], col("slow_engine"), label="slow_engine", color="#4285f4", linewidth=0.8)
-    axes[1].plot(recent["date"], col("fast_engine"), label="fast_engine", color="#e67e22", linewidth=0.8)
+    axes[1].plot(full_diag["date"], full_col("rule_axis"), label="rule_axis", color="#d9534f", linewidth=0.8)
+    axes[1].plot(full_diag["date"], full_col("slow_engine"), label="slow_engine", color="#4285f4", linewidth=0.8)
+    axes[1].plot(full_diag["date"], full_col("fast_engine"), label="fast_engine", color="#e67e22", linewidth=0.8)
     axes[1].axhline(0.60, color="#72b7b2", linestyle=":", linewidth=0.7)
     axes[1].axhline(0.30, color="#f28e8e", linestyle=":", linewidth=0.7)
     axes[1].legend(fontsize=7, ncol=3, loc="upper left")
     axes[1].set_ylabel("Axis / Engine")
     for name in ("cv_trend", "cv_volume_price", "cv_position", "cv_intraday"):
-        axes[2].plot(recent["date"], col(name), linewidth=0.7, label=name)
+        axes[2].plot(full_diag["date"], full_col(name), linewidth=0.7, label=name)
     axes[2].axhline(0.5, color="#888", linestyle=":", linewidth=0.6)
     axes[2].legend(fontsize=7, ncol=4, loc="upper left")
     axes[2].set_ylabel("4 Dimensions (cv)")
     axes[3].set_ylim(-1.05, 1.05)
     axes[3].set_yticks([-1, 0, 1], labels=["Short (-1)", "Flat (0)", "Long (+1)"])
-    _state_background(axes[3], recent["date"].reset_index(drop=True), recent["raw_state"].reset_index(drop=True).fillna(0))
+    _state_background(axes[3], full_diag["date"].reset_index(drop=True), full_diag["raw_state"].reset_index(drop=True).fillna(0))
     axes[3].set_ylabel("Raw State")
     axes[4].set_ylim(-1.05, 1.05)
     axes[4].set_yticks([-1, 0, 1], labels=["Short (-1)", "Flat (0)", "Long (+1)"])
-    _state_background(axes[4], recent["date"].reset_index(drop=True), recent["adjusted_state"].reset_index(drop=True).fillna(0))
+    _state_background(axes[4], full_diag["date"].reset_index(drop=True), full_diag["adjusted_state"].reset_index(drop=True).fillna(0))
     axes[4].set_ylabel("Adj State")
-    axes[4].xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-    axes[4].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    fig.suptitle("1545 Engine Internals: 2023-01 ~ latest local data", fontsize=13, weight="bold")
+    axes[4].xaxis.set_major_locator(mdates.YearLocator(1))
+    axes[4].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    fig.suptitle("1545 引擎内部状态诊断：2018-01 至最新", fontsize=13, weight="bold")
     fig.tight_layout()
-    fig.savefig(output_dir / "15_1545_引擎内部状态诊断_2023-01至最新.png", dpi=130, bbox_inches="tight", facecolor="white")
+    fig.savefig(output_dir / "15_1545_引擎内部状态诊断_2018至最新.png", dpi=130, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
-    # 16: slow-fast divergence with raw/adjusted state rows.
-    recent_25 = recent.loc[recent["date"].ge(pd.Timestamp("2025-01-01"))].copy()
+    full_divergence = full_col("slow_engine") - full_col("fast_engine")
     fig, axes = plt.subplots(4, 1, figsize=(12.5, 8.6), dpi=130, sharex=True, gridspec_kw={"height_ratios": [1.0, 1.0, 0.8, 0.8]})
-    divergence = col("slow_engine") - col("fast_engine")
-    axes[0].plot(recent["date"], divergence, color="#4c78a8", linewidth=0.8)
+    axes[0].plot(full_diag["date"], full_divergence, color="#4c78a8", linewidth=0.8)
     axes[0].axhline(0, color="#666", linewidth=0.6)
     axes[0].set_ylabel("S-F Div")
-    axes[1].plot(recent["date"], col("rule_axis"), color="#d9534f", linewidth=0.8)
+    axes[1].plot(full_diag["date"], full_col("rule_axis"), color="#d9534f", linewidth=0.8)
     axes[1].axhline(0.30, color="#f28e8e", linestyle=":", linewidth=0.7)
     axes[1].axhline(0.60, color="#72b7b2", linestyle=":", linewidth=0.7)
     axes[1].set_ylabel("rule_axis")
     axes[2].set_ylim(-1.05, 1.05)
     axes[2].set_yticks([-1, 0, 1], labels=["Short", "Flat", "Long"])
-    _state_background(axes[2], recent["date"].reset_index(drop=True), recent["raw_state"].reset_index(drop=True).fillna(0))
+    _state_background(axes[2], full_diag["date"].reset_index(drop=True), full_diag["raw_state"].reset_index(drop=True).fillna(0))
     axes[2].set_ylabel("Raw")
     axes[3].set_ylim(-1.05, 1.05)
     axes[3].set_yticks([-1, 0, 1], labels=["Short", "Flat", "Long"])
-    _state_background(axes[3], recent["date"].reset_index(drop=True), recent["adjusted_state"].reset_index(drop=True).fillna(0))
+    _state_background(axes[3], full_diag["date"].reset_index(drop=True), full_diag["adjusted_state"].reset_index(drop=True).fillna(0))
     axes[3].set_ylabel("Adj")
-    axes[3].xaxis.set_major_locator(mdates.MonthLocator(interval=3))
-    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    fig.suptitle("Slow-Fast Divergence: Why 2025 Underperforms", fontsize=13, weight="bold")
+    axes[3].xaxis.set_major_locator(mdates.YearLocator(1))
+    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    fig.suptitle("慢引擎—快引擎背离：2018 年至最新完整周期", fontsize=13, weight="bold")
     fig.tight_layout()
-    fig.savefig(output_dir / "16_1545_慢快线背离_2025表现解释.png", dpi=130, bbox_inches="tight", facecolor="white")
+    fig.savefig(output_dir / "16_1545_慢快线背离_2018至最新.png", dpi=130, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
     # Annual engine summary table.
@@ -1132,7 +1136,7 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
     table = summary.copy()
     for c in ("S-F Div", "Axis Std", "Raw %", "Adj %", "Idx %", "Raw Ex", "Adj Ex"):
         table[c] = table[c].map(lambda x: "nan" if pd.isna(x) else (f"{x:+.2f}%" if c.endswith("%") or c.endswith("Ex") else f"{x:+.3f}"))
-    _save_table_figure(_fmt_table(table), output_dir / "17_1545_表现汇总_原始与调整_四反转.png", title="1545 Performance Summary: Raw vs Adjusted (+4 Reversal)", dark=False)
+    _save_table_figure(_fmt_table(table), output_dir / "17_1545_表现汇总_原始与调整_四反转.png", title="1545 表现汇总：原始三状态与加入四个反转", dark=False)
 
     # State comparison for 2023 onward.
     fig, axes = plt.subplots(2, 1, figsize=(12.5, 5.2), dpi=130, sharex=True)
@@ -1145,21 +1149,23 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
         ax.set_ylabel(label)
     axes[1].xaxis.set_major_locator(mdates.MonthLocator(interval=4))
     axes[1].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    fig.suptitle("State Comparison: Raw 1545 vs Adjusted (+4 Reversal)", fontsize=13, weight="bold")
+    fig.suptitle("状态对比：原始三状态与加入四个反转", fontsize=13, weight="bold")
     fig.tight_layout()
     fig.savefig(output_dir / "18_1545_状态对比_原始与调整_四反转.png", dpi=130, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
-    # Full-cycle diagnostic curves.
-    full = recent.copy()
+    # Full-cycle diagnostic curves.  Keep the data range aligned with the
+    # filename/title: this panel starts at 2018 rather than reusing the
+    # 2023-focused diagnostic slice above.
+    full = full_diag.copy()
     # Use execution-date returns for the rolling performance layers.
     exec_join = frame.set_index("实际执行日")
     full["adj_return"] = full["effective_date"].map(exec_join["调整策略日收益"])
     full["index_return"] = full["effective_date"].map(exec_join["指数日收益"])
     full["rolling_excess_252"] = (full["adj_return"] - full["index_return"]).rolling(252, min_periods=60).sum() * 100.0
-    full["axis_std_252"] = col("rule_axis").rolling(252, min_periods=60).std()
-    full["dim_corr_252"] = col("cv_trend").rolling(252, min_periods=60).corr(col("cv_volume_price"))
-    full["sf_div"] = col("slow_engine") - col("fast_engine")
+    full["axis_std_252"] = full_col("rule_axis").rolling(252, min_periods=60).std()
+    full["dim_corr_252"] = full_col("cv_trend").rolling(252, min_periods=60).corr(full_col("cv_volume_price"))
+    full["sf_div"] = full_col("slow_engine") - full_col("fast_engine")
     full["neutral_share_252"] = (full["adjusted_state"].fillna(0).eq(0)).rolling(252, min_periods=60).mean() * 100.0
     fig, axes = plt.subplots(5, 1, figsize=(12.2, 10.0), dpi=130, sharex=True)
     performance_dates = full["effective_date"] if "effective_date" in full.columns else full["date"]
@@ -1190,7 +1196,7 @@ def _plot_internal_diagnostics(panel: pd.DataFrame | None, frame: pd.DataFrame, 
     axes[4].set_ylabel("Neutral %")
     axes[4].xaxis.set_major_locator(mdates.YearLocator())
     axes[4].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-    fig.suptitle("Full Cycle: Market Regime vs Model Performance (2018-latest)", fontsize=13, weight="bold")
+    fig.suptitle("全周期市场状态与模型表现：2018 年至最新", fontsize=13, weight="bold")
     fig.tight_layout()
     fig.savefig(output_dir / "19_1545_全周期市场状态与模型表现_2018-最新.png", dpi=130, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -1205,19 +1211,19 @@ def _write_stage04_curves(frame: pd.DataFrame, output_dir: Path) -> None:
         frame,
         output_dir / "04_原始与调整_净值对比.png",
         [("原始净值", "Raw 1545 NAV", "#f58518"), ("调整净值", "Adjusted 1545 NAV", "#d62728"), ("指数净值", "Index B&H NAV", "#4285f4")],
-        "1545 Three-State: Raw vs Adjusted vs Index B&H (O2O additive NAV)",
+        "1545 三状态：原始、调整与指数买入持有（O2O 加算净值）",
     )
     _plot_nav(
         frame,
         output_dir / "04_原始与调整_超额净值对比.png",
         [("原始超额净值", "Raw 1545 Excess NAV", "#f58518"), ("调整超额净值", "Adjusted 1545 Excess NAV", "#d62728")],
-        "1545 Raw vs Adjusted: Excess NAV over CSI500 (O2O additive)",
+        "1545 原始与调整：相对中证500的超额净值（O2O 加算）",
     )
     _plot_nav(
         frame,
         output_dir / "04_调整相对原始_超额收益.png",
         [("调整相对原始净值", "Adjusted minus Raw (additive)", "#2ca02c")],
-        "Adjusted 1545 Relative Gain over Raw (Additive O2O)",
+        "调整后1545相对原始状态的增量（O2O 加算）",
         ylabel="Relative NAV",
     )
 
@@ -1241,7 +1247,6 @@ def _write_remote_style_aliases(output_dir: Path, internal_date_max: str | None 
         try:
             end = pd.Timestamp(internal_date_max)
             aliases.update({
-                f"15_1545_引擎内部状态诊断_2023-01至{end:%Y-%m}.png": "15_1545_引擎内部状态诊断_2023-01至最新.png",
                 f"19_1545_全周期市场状态与模型表现_2018-{end:%Y}.png": "19_1545_全周期市场状态与模型表现_2018-最新.png",
             })
         except Exception:
@@ -1369,7 +1374,7 @@ def _write_2026_analysis(frame: pd.DataFrame, output_dir: Path) -> dict[str, Any
         axes[2].set_ylabel("Adj state")
         axes[2].xaxis.set_major_locator(mdates.MonthLocator())
         axes[2].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-        fig.suptitle("2026 Performance Decomposition: O2O Additive Return and State Coverage", fontsize=13, weight="bold")
+        fig.suptitle("2026 年表现分解：O2O 加算收益与状态覆盖", fontsize=13, weight="bold")
         fig.tight_layout()
         fig.savefig(output_dir / "2026_表现分解_收益与状态.png", dpi=140, bbox_inches="tight", facecolor="white")
         plt.close(fig)
@@ -1541,19 +1546,19 @@ def run(spot_path: str | Path, holding_path: str | Path, output_dir: str | Path,
         frame,
         output_dir / "12_原始与调整_净值对比.png",
         [("原始净值", "Raw 1545 NAV", "#f58518"), ("调整净值", "Adjusted 1545 NAV", "#d62728"), ("指数净值", "Index B&H NAV", "#4285f4")],
-        "1545 Three-State: Raw vs Adjusted vs Index B&H (NAV)",
+        "1545 三状态：原始、调整与指数买入持有（净值）",
     )
     _plot_nav(
         frame,
         output_dir / "13_原始与调整_超额净值对比.png",
         [("原始超额净值", "Raw 1545 Excess NAV", "#f58518"), ("调整超额净值", "Adjusted 1545 Excess NAV", "#d62728")],
-        "1545 Raw vs Adjusted: Excess NAV over CSI500",
+        "1545 原始与调整：相对中证500的超额净值",
     )
     _plot_nav(
         frame,
         output_dir / "14_调整相对原始_超额收益.png",
         [("调整相对原始净值", "Adjusted minus Raw (additive)", "#2ca02c")],
-        "Adjusted 1545 Relative Gain over Raw (Additive)",
+        "调整后1545相对原始状态的增量（加算）",
         ylabel="Relative NAV",
     )
 

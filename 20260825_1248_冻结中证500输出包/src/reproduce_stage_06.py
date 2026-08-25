@@ -33,7 +33,27 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-plt.rcParams["font.sans-serif"] = ["Heiti SC", "Hiragino Sans GB", "Arial Unicode MS", "DejaVu Sans"]
+# Use a CJK-capable font for titles and legends on both macOS and the remote
+# Linux desktop.  Keep the variable names in axes/legends unchanged so they
+# remain directly traceable to the diagnostic tables.
+plt.rcParams["font.sans-serif"] = [
+    "Noto Sans CJK SC",
+    "Source Han Sans CN",
+    "Microsoft YaHei",
+    "SimHei",
+    "Heiti SC",
+    "Hiragino Sans GB",
+    "Arial Unicode MS",
+    "DejaVu Sans",
+]
+plt.rcParams["font.monospace"] = [
+    "Noto Sans Mono CJK SC",
+    "Sarasa Mono SC",
+    "Source Han Mono",
+    "Hiragino Sans GB",
+    "Arial Unicode MS",
+    "DejaVu Sans Mono",
+]
 plt.rcParams["axes.unicode_minus"] = False
 
 from reproduce_remote_o2o import (
@@ -371,7 +391,7 @@ def _plot_analogues(analogs: pd.DataFrame, comparison: pd.DataFrame, figures: Pa
     for idx, (_, row) in enumerate(historical.iterrows()):
         ax.text(row["distance"], idx, f"  {row['window_end']}", va="center", fontsize=9)
     ax.set_xlabel("Feature distance to 2026 current 60-trading-day window")
-    ax.set_title("Historical analogue windows: closest observed market/model environments", weight="bold")
+    ax.set_title("历史相似行情窗口：最接近的历史市场与模型环境", weight="bold")
     ax.grid(axis="x", alpha=0.25)
     fig.tight_layout()
     fig.savefig(figures / "01_历史相似行情_特征距离.png", dpi=150, bbox_inches="tight")
@@ -382,7 +402,7 @@ def _plot_analogues(analogs: pd.DataFrame, comparison: pd.DataFrame, figures: Pa
     im = ax.imshow(heat.to_numpy(float), aspect="auto", cmap="coolwarm", vmin=-2.5, vmax=2.5)
     ax.set_xticks(np.arange(len(heat.columns)), labels=heat.columns, rotation=65, ha="right", fontsize=8)
     ax.set_yticks(np.arange(len(heat.index)), labels=heat.index, fontsize=9)
-    ax.set_title("Analogue feature comparison (standardized relative to the 2026 window)", weight="bold")
+    ax.set_title("历史相似行情特征对比（相对于 2026 当前窗口的标准化差异）", weight="bold")
     fig.colorbar(im, ax=ax, label="(analogue - 2026) / historical scale")
     fig.tight_layout()
     fig.savefig(figures / "02_历史相似行情_特征对比热图.png", dpi=150, bbox_inches="tight")
@@ -390,68 +410,69 @@ def _plot_analogues(analogs: pd.DataFrame, comparison: pd.DataFrame, figures: Pa
 
 
 def _plot_mechanism(combined: pd.DataFrame, figures: Path) -> None:
-    recent = combined.loc[combined.index >= pd.Timestamp("2023-01-01")].copy()
+    full = combined.loc[combined.index >= pd.Timestamp("2018-01-01")].copy()
     fig, axes = plt.subplots(4, 1, figsize=(13.5, 10.5), dpi=150, sharex=True, gridspec_kw={"height_ratios": [1.0, 1.0, 1.1, 0.8]})
-    axes[0].plot(recent.index, recent["close"], color="#2f6db0", linewidth=0.9)
+    axes[0].plot(full.index, full["close"], color="#2f6db0", linewidth=0.9)
     axes[0].set_ylabel("CSI500 close")
-    axes[0].set_title("Observable mechanism chain: market environment → relative engine → state response", weight="bold")
-    axes[1].plot(recent.index, recent["return_60"] * 100.0, label="60d return %", color="#e07a2d")
-    axes[1].plot(recent.index, recent["vol_60"] * 100.0, label="60d vol %", color="#8c5cc7")
+    axes[0].set_title("可观测机制链：市场环境 → 相对引擎 → 状态响应", weight="bold")
+    axes[1].plot(full.index, full["return_60"] * 100.0, label="60d return %", color="#e07a2d")
+    axes[1].plot(full.index, full["vol_60"] * 100.0, label="60d vol %", color="#8c5cc7")
     axes[1].set_ylabel("Market features")
     axes[1].legend(ncol=2, fontsize=8)
-    axes[2].plot(recent.index, recent["rule_axis"], label="rule_axis", color="#c23b3b", linewidth=0.8)
-    axes[2].plot(recent.index, recent["slow_engine"], label="slow_engine", color="#356bb3", linewidth=0.8)
-    axes[2].plot(recent.index, recent["fast_engine"], label="fast_engine", color="#e78727", linewidth=0.8)
+    axes[2].plot(full.index, full["rule_axis"], label="rule_axis", color="#c23b3b", linewidth=0.8)
+    axes[2].plot(full.index, full["slow_engine"], label="slow_engine", color="#356bb3", linewidth=0.8)
+    axes[2].plot(full.index, full["fast_engine"], label="fast_engine", color="#e78727", linewidth=0.8)
     axes[2].axhline(0.70, color="#3d9b6d", linestyle=":", linewidth=0.7)
     axes[2].axhline(0.30, color="#b34c4c", linestyle=":", linewidth=0.7)
     axes[2].set_ylabel("Relative scores")
     axes[2].legend(ncol=3, fontsize=8)
     axes[3].set_ylim(-1.05, 1.05)
     axes[3].set_yticks([-1, 0, 1], labels=["Short", "Flat", "Long"])
-    _plot_state_background(axes[3], recent.index, recent["raw_state_execution_aligned"])
+    _plot_state_background(axes[3], full.index, full["raw_state_execution_aligned"])
     axes[3].set_ylabel("Raw state")
-    axes[3].xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    axes[3].xaxis.set_major_locator(mdates.YearLocator(1))
+    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    axes[0].set_title("可观测机制链：2018 年至最新：市场环境 → 相对引擎 → 状态响应", weight="bold")
     fig.tight_layout()
-    fig.savefig(figures / "03_行情与模型相对状态_2023至最新.png", dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(figures / "03_行情与模型相对状态_2018至最新.png", dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
 def _plot_sync_and_confirmation(combined: pd.DataFrame, figures: Path) -> None:
-    recent = combined.loc[combined.index >= pd.Timestamp("2023-01-01")].copy()
+    full = combined.loc[combined.index >= pd.Timestamp("2018-01-01")].copy()
     dimensions = ["cv_trend", "cv_volume_price", "cv_position", "cv_intraday"]
     fig, axes = plt.subplots(4, 1, figsize=(13.5, 10.0), dpi=150, sharex=True, gridspec_kw={"height_ratios": [1.0, 0.9, 0.9, 0.8]})
     for column in dimensions:
-        axes[0].plot(recent.index, recent[column], linewidth=0.7, label=column.replace("cv_", ""))
+        axes[0].plot(full.index, full[column], linewidth=0.7, label=column.replace("cv_", ""))
     axes[0].axhline(0.60, color="#399b6d", linestyle=":", linewidth=0.7)
     axes[0].axhline(0.30, color="#b54b4b", linestyle=":", linewidth=0.7)
     axes[0].set_ylabel("Four views")
     axes[0].legend(ncol=4, fontsize=8)
-    axes[1].plot(recent.index, recent["positive_sync_mean_60"], label="positive sync", color="#2b8cbe")
-    axes[1].plot(recent.index, recent["negative_sync_mean_60"], label="negative sync", color="#d95f02")
+    axes[1].plot(full.index, full["positive_sync_mean_60"], label="positive sync", color="#2b8cbe")
+    axes[1].plot(full.index, full["negative_sync_mean_60"], label="negative sync", color="#d95f02")
     axes[1].set_ylabel("60d mean sync")
     axes[1].legend(ncol=2, fontsize=8)
-    axes[2].plot(recent.index, recent["base_state"], drawstyle="steps-post", label="formal base_state", color="#4d4d4d")
-    axes[2].plot(recent.index, recent["naive_axis_state"], drawstyle="steps-post", label="axis-only proxy", color="#9e9ac8", alpha=0.8)
+    axes[2].plot(full.index, full["base_state"], drawstyle="steps-post", label="formal base_state", color="#4d4d4d")
+    axes[2].plot(full.index, full["naive_axis_state"], drawstyle="steps-post", label="axis-only proxy", color="#9e9ac8", alpha=0.8)
     axes[2].set_ylim(-1.1, 1.1)
     axes[2].set_yticks([-1, 0, 1])
     axes[2].set_ylabel("State")
     axes[2].legend(ncol=2, fontsize=8)
-    axes[3].plot(recent.index, recent["switch_rate_60"] * 100.0, color="#4c78a8")
+    axes[3].plot(full.index, full["switch_rate_60"] * 100.0, color="#4c78a8")
     axes[3].set_ylabel("Switch rate %")
-    axes[3].xaxis.set_major_locator(mdates.MonthLocator(interval=4))
-    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
-    fig.suptitle("Multi-view synchronization and confirmation/hysteresis diagnostic", fontsize=13, weight="bold")
+    axes[3].xaxis.set_major_locator(mdates.YearLocator(1))
+    axes[3].xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
+    fig.suptitle("多视角同步与确认/滞回诊断：2018 年至最新完整周期", fontsize=13, weight="bold")
     fig.tight_layout()
-    fig.savefig(figures / "04_多视角同步与确认响应_2023至最新.png", dpi=150, bbox_inches="tight", facecolor="white")
+    fig.savefig(figures / "04_多视角同步与确认响应_2018至最新.png", dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
 
 
 def _plot_counterfactual(proxy: pd.DataFrame, annual: pd.DataFrame, figures: Path) -> None:
-    recent = proxy.loc[proxy.index >= pd.Timestamp("2023-01-01")].copy()
+    full = proxy.loc[proxy.index >= pd.Timestamp("2018-01-01")].copy()
     fig, axes = plt.subplots(2, 1, figsize=(13.5, 7.0), dpi=150, sharex=False, gridspec_kw={"height_ratios": [1.3, 0.8]})
-    axes[0].plot(recent.index, recent["rule_axis"], label="actual rolling-relative axis", color="#c23b3b", linewidth=0.8)
-    axes[0].plot(recent.index, recent["fixed_anchor_axis_proxy"], label="fixed Development-anchor proxy", color="#356bb3", linewidth=0.8)
+    axes[0].plot(full.index, full["rule_axis"], label="actual rolling-relative axis", color="#c23b3b", linewidth=0.8)
+    axes[0].plot(full.index, full["fixed_anchor_axis_proxy"], label="fixed Development-anchor proxy", color="#356bb3", linewidth=0.8)
     axes[0].axhline(0.70, color="#3d9b6d", linestyle=":", linewidth=0.7)
     axes[0].axhline(0.30, color="#b34c4c", linestyle=":", linewidth=0.7)
     axes[0].set_ylabel("Axis")
@@ -464,7 +485,7 @@ def _plot_counterfactual(proxy: pd.DataFrame, annual: pd.DataFrame, figures: Pat
     axes[1].set_xticks(x, annual["year"].astype(str))
     axes[1].set_ylabel("Annual switch count")
     axes[1].legend(ncol=3, fontsize=8)
-    fig.suptitle("Counterfactual diagnostics: response rule vs fixed-anchor proxy", fontsize=13, weight="bold")
+    fig.suptitle("反事实诊断：滚动相对规则与固定锚定代理", fontsize=13, weight="bold")
     fig.tight_layout()
     fig.savefig(figures / "05_滚动相对标准化与固定锚定代理.png", dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -480,7 +501,7 @@ def _plot_forward_quality(analogs: pd.DataFrame, annual: pd.DataFrame, figures: 
     ax.axhline(0.0, color="#555", linewidth=0.7)
     ax.set_xticks(x, [f"{row.label}\n{row.window_end}" for row in historical.itertuples()], fontsize=8)
     ax.set_ylabel("Post-window return %")
-    ax.set_title("Post-window outcomes of historical analogues (evaluation only)", weight="bold")
+    ax.set_title("历史相似窗口的后续表现（仅用于事后评价）", weight="bold")
     ax.legend(ncol=2, fontsize=8)
     ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
@@ -495,7 +516,7 @@ def _plot_forward_quality(analogs: pd.DataFrame, annual: pd.DataFrame, figures: 
     ax.axhline(0.0, color="#555", linewidth=0.7)
     ax.set_xticks(x, annual["year"].astype(str))
     ax.set_ylabel("Additive O2O return %")
-    ax.set_title("Annual performance and the direction-coverage change", weight="bold")
+    ax.set_title("年度表现与方向覆盖变化", weight="bold")
     ax.legend(fontsize=8)
     ax.grid(axis="y", alpha=0.25)
     fig.tight_layout()
@@ -528,7 +549,7 @@ def _plot_teacher_full_period_curve(execution: pd.DataFrame, figures: Path) -> d
         & work["执行日O2O"].notna()
     ].sort_values("实际执行日", kind="stable").copy()
     if work.empty:
-        raise ValueError("老师同时间范围曲线没有 2023 年以来的可评价执行日")
+        raise ValueError("问题图同时间范围曲线没有 2023 年以来的可评价执行日")
 
     work["基础三状态_NAV"] = 1.0 + pd.to_numeric(work["原始策略日收益"], errors="coerce").cumsum()
     work["加入四个反转_NAV"] = 1.0 + pd.to_numeric(work["调整策略日收益"], errors="coerce").cumsum()
@@ -558,7 +579,7 @@ def _plot_teacher_full_period_curve(execution: pd.DataFrame, figures: Path) -> d
         )
     ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
     ax.set_title(
-        "老师原图同时间范围：基础三状态、加入四个反转与普通指数\n"
+        "问题图同时间范围：基础三状态、加入四个反转与普通指数\n"
         f"{work['实际执行日'].min():%Y-%m-%d}—{work['实际执行日'].max():%Y-%m-%d}；"
         "执行日 O2O 加算，NAV=1+累计收益，不复利",
         fontsize=13,
@@ -572,7 +593,7 @@ def _plot_teacher_full_period_curve(execution: pd.DataFrame, figures: Path) -> d
     _add_state_marker_legend(ax, ncol=3, loc="upper left")
     fig.autofmt_xdate()
     fig.tight_layout()
-    output = figures / "29_老师原图同时间范围_2023至最新_三状态与指数_O2O.png"
+    output = figures / "29_问题图同时间范围_2023至最新_三状态与指数_O2O.png"
     fig.savefig(output, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     return {
@@ -622,7 +643,7 @@ def build_teacher_red_window_analysis(
     ]
     missing = [column for column in required if column not in work.columns]
     if missing:
-        raise ValueError(f"老师红色区间复盘缺少Stage-04字段：{missing}")
+        raise ValueError(f"问题图红色区间复盘缺少Stage-04字段：{missing}")
 
     daily_rows: list[pd.DataFrame] = []
     summary_rows: list[dict[str, Any]] = []
@@ -633,16 +654,16 @@ def build_teacher_red_window_analysis(
             work["实际执行日"].between(start, end, inclusive="both") & work["O2O可评价"]
         ].copy()
         if window.empty:
-            raise ValueError(f"老师红色区间没有可评价执行日：{spec['window_id']} {start.date()}—{end.date()}")
+            raise ValueError(f"问题图红色区间没有可评价执行日：{spec['window_id']} {start.date()}—{end.date()}")
 
-        window["老师区间"] = spec["window_id"]
+        window["问题图区间"] = spec["window_id"]
         window["局部原始三状态_NAV"] = 1.0 + pd.to_numeric(window["原始策略日收益"], errors="coerce").cumsum()
         window["局部加入四反转_NAV"] = 1.0 + pd.to_numeric(window["调整策略日收益"], errors="coerce").cumsum()
         window["局部普通指数_NAV"] = 1.0 + pd.to_numeric(window["指数日收益"], errors="coerce").cumsum()
         daily_rows.append(
             window[
                 [
-                    "老师区间",
+                    "问题图区间",
                     "实际执行日",
                     "推定形成日",
                     "原始状态",
@@ -705,8 +726,8 @@ def build_teacher_red_window_analysis(
 
         summary_rows.append(
             {
-                "老师区间": spec["window_id"],
-                "老师图示范围": f"{start.date()}—{end.date()}",
+                "问题图区间": spec["window_id"],
+                "问题图示范围": f"{start.date()}—{end.date()}",
                 "实际执行日范围": f"{window['实际执行日'].min().date()}—{window['实际执行日'].max().date()}",
                 "可评价执行日": int(len(window)),
                 "基础0天数": base_zero_days,
@@ -728,7 +749,7 @@ def build_teacher_red_window_analysis(
                 "+1反转信号天数": int(pd.to_numeric(window["+1反转"], errors="coerce").sum()),
                 "-1反转信号天数": int(pd.to_numeric(window["-1反转"], errors="coerce").sum()),
                 "区间解释": analysis,
-                "老师图示说明": spec["description"],
+                "问题图示说明": spec["description"],
             }
         )
 
@@ -736,8 +757,8 @@ def build_teacher_red_window_analysis(
     summary = pd.DataFrame(summary_rows)
     tables = output_dir / "tables"
     tables.mkdir(parents=True, exist_ok=True)
-    daily_path = tables / "老师红色区间复盘逐日_O2O.csv"
-    summary_path = tables / "老师红色区间复盘汇总_O2O.csv"
+    daily_path = tables / "问题图红色区间复盘逐日_O2O.csv"
+    summary_path = tables / "问题图红色区间复盘汇总_O2O.csv"
     daily.to_csv(daily_path, index=False, encoding="utf-8-sig", date_format="%Y-%m-%d")
     summary.to_csv(summary_path, index=False, encoding="utf-8-sig")
 
@@ -755,7 +776,7 @@ def build_teacher_red_window_analysis(
     }
 
     def plot_window(window_id: str, path: Path, title_suffix: str = "") -> None:
-        data = daily.loc[daily["老师区间"].eq(window_id)].copy()
+        data = daily.loc[daily["问题图区间"].eq(window_id)].copy()
         fig, ax = plt.subplots(figsize=(13.5, 5.4), dpi=150)
         for column, label, color in line_specs:
             _plot_curve_with_execution_points(
@@ -768,7 +789,7 @@ def build_teacher_red_window_analysis(
                 linewidth=1.5 if column != "局部普通指数_NAV" else 1.15,
             )
         ax.axhline(1.0, color="#999999", linestyle="--", linewidth=0.7)
-        row = summary.loc[summary["老师区间"].eq(window_id)].iloc[0]
+        row = summary.loc[summary["问题图区间"].eq(window_id)].iloc[0]
         ax.set_title(
             f"{window_id} {title_suffix}\n"
             f"基础0 {int(row['基础0天数'])}天 → 加入四反转后0 {int(row['加入四反转后0天数'])}天；"
@@ -787,11 +808,11 @@ def build_teacher_red_window_analysis(
         fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
         plt.close(fig)
 
-    combined_path = figures / "28_老师红色区间_三状态与指数_O2O局部复盘.png"
+    combined_path = figures / "28_问题图红色区间_三状态与指数_O2O局部复盘.png"
     fig, axes = plt.subplots(3, 1, figsize=(14.0, 11.0), dpi=150, sharey=False)
     for ax, spec in zip(axes, TEACHER_RED_WINDOWS):
-        data = daily.loc[daily["老师区间"].eq(spec["window_id"])].copy()
-        row = summary.loc[summary["老师区间"].eq(spec["window_id"])].iloc[0]
+        data = daily.loc[daily["问题图区间"].eq(spec["window_id"])].copy()
+        row = summary.loc[summary["问题图区间"].eq(spec["window_id"])].iloc[0]
         for column, label, color in line_specs:
             _plot_curve_with_execution_points(
                 ax,
@@ -817,7 +838,7 @@ def build_teacher_red_window_analysis(
             _add_state_marker_legend(ax, ncol=3, loc="best")
     axes[-1].set_xlabel("Execution date")
     fig.suptitle(
-        "老师红色0区间局部复盘：基础三状态、加入四个反转和普通指数\n"
+        "问题图红色0区间局部复盘：基础三状态、加入四个反转和普通指数\n"
         "统一使用执行日开盘→下一实际交易日开盘的O2O收益；NAV=1+累计加算收益，不复利",
         fontsize=13,
         weight="bold",
@@ -938,23 +959,23 @@ def _write_report(
     image_names = [
         "01_历史相似行情_特征距离.png",
         "02_历史相似行情_特征对比热图.png",
-        "03_行情与模型相对状态_2023至最新.png",
-        "04_多视角同步与确认响应_2023至最新.png",
+        "03_行情与模型相对状态_2018至最新.png",
+        "04_多视角同步与确认响应_2018至最新.png",
         "05_滚动相对标准化与固定锚定代理.png",
         "06_历史相似阶段未来表现对比.png",
         "07_年度收益与方向覆盖对比.png",
         "08_本地远端一致性审计.png",
     ]
     lines = [
-        "# 06｜历史相似行情与2026敏感度机制分析",
+        "# 历史相似行情与2026敏感度机制分析",
         "",
-        "本报告由 06 Notebook 生成。它只读取本地米筐现货、冻结包已有的含持有期八列表和冻结 1545 内部面板；不改动任何生产信号、阈值、持有参数或输出格式。",
+        "本报告由机制分析 Notebook 生成。它只读取本地米筐现货、冻结包已有的含持有期八列表和冻结 1545 内部面板；不改动任何生产信号、阈值、持有参数或输出格式。",
         "",
         "## 本次更新与上一版 06 差异说明",
         "",
-        "上一版对照中 01、03、04、05 已通过，而 06 的四张机制表出现差异；这不是冻结信号、阈值或执行日口径改变，而是 06 诊断层的输入与输出路径问题。",
+        "上一版对照中 01、03、04、05 已通过，而机制分析的四张诊断表出现差异；这不是冻结信号、阈值或执行日口径改变，而是诊断层的输入与输出路径问题。",
         "",
-        "- 老师红框复盘表此前写在 06 输出目录根部，但 Notebook 展示单元格按 `tables/` 读取，因而会出现文件不存在；现在统一写入 `runtime_outputs_06_mechanism/tables/`。",
+        "- 问题图红框复盘表此前写在机制分析输出目录根部，但 Notebook 展示单元格按 `tables/` 读取，因而会出现文件不存在；现在统一写入 `runtime_outputs_06_mechanism/tables/`。",
         "- 06 此前允许外部 `PANEL_PATH` 覆盖内部 1545 面板；如果该面板来自旧截点、不同供应商或旧计算，会在 06 的候选、z 值、机制面板和年度汇总中造成差异，即使 01—05 仍然一致。现在强制忽略 `PANEL_PATH`，始终从本次 `COMPANY_SPOT_PATH` 重建 1545 诊断面板。",
         "- 因此 06 现在与生产运行使用同一份现货血缘；这只修正诊断复现，不改变冻结的生产信号逻辑。07 的严格检查还会对 06 表格逐行、逐列核对。",
         "",
@@ -995,7 +1016,7 @@ def _write_report(
         "图07结果：按 O2O 加算口径，加入反转和持有路径后的调整结果在各年度都高于对应原始三状态结果；2026 年原始结果约 22.88%，调整后约 35.48%，方向性持有日 82 天。",
         "图07分析：2026 的改善主要说明快速反应层在原三状态未及时改变的区间里补充了部分方向覆盖，但这仍是历史样本中的结果，不应等同于未来必然增益。基础三状态负责阶段基线，四个反转负责事件级的退出和零段转移，二者不是同一种角色。",
         "",
-        "## 六、对老师问题的直接回答",
+        "## 六、对问题的直接回答",
         "",
         "1. 红色 0 状态区间：当前图和机制拆解支持“低波动或多视角分歧导致确认不足”的解释。0 不是没有信息，而是尚未达到正式方向状态的确认条件。若要继续细分，应增加诊断层的向上积累、向下积累、冲突和等待确认标签，不能直接把冻结 0 改成方向状态。",
         "2. 2026 识别更快：现有证据支持三部分共同作用——行情波动和方向变化更集中、多个视角在相近日期同步变化、滚动相对标准化使当前值能与近期环境比较；确认和滞回规则则负责避免把所有波动都变成切换。图中可以做机制解释，但不能把贡献精确归因到某一个因素。",
@@ -1011,11 +1032,11 @@ def _write_report(
     if teacher_analysis is not None:
         teacher_summary = teacher_analysis["summary"].copy()
         teacher_lines = [
-            "## 五、老师红色0区间逐段复盘",
+            "## 五、问题图红色0区间逐段复盘",
             "",
-            "以下三个窗口按老师提供的红框时间范围对齐。图中的三条曲线全部采用与04全时期图相同的执行日O2O口径：执行日开盘到下一实际交易日开盘，收益按加法累计，不复利。每个局部窗口仅将首日NAV重新设为1，便于比较，不改变任何日收益。每个点对应一个真实执行日；颜色表示执行日状态（-1绿色、0蓝色、+1红色），圆点是初始三状态，方点是调整后三状态。",
+            "以下三个窗口按问题图中的红框时间范围对齐。图中的三条曲线全部采用与04全时期图相同的执行日O2O口径：执行日开盘到下一实际交易日开盘，收益按加法累计，不复利。每个局部窗口仅将首日NAV重新设为1，便于比较，不改变任何日收益。每个点对应一个真实执行日；颜色表示执行日状态（-1绿色、0蓝色、+1红色），圆点是初始三状态，方点是调整后三状态。",
             "",
-            "老师红框边界（按图片坐标人工记录，作为固定诊断窗口）：",
+            "问题图红框边界（按图片坐标人工记录，作为固定诊断窗口）：",
             "",
             "- 红色区间1：2023-11-01—2024-01-15；",
             "- 红色区间2：2024-04-15—2024-09-15；",
@@ -1026,22 +1047,22 @@ def _write_report(
             "逐段解读：",
         ]
         for row in teacher_summary.itertuples(index=False):
-            teacher_lines.append(f"- {row.老师区间}（{row.实际执行日范围}）：{row.区间解释}")
+            teacher_lines.append(f"- {row.问题图区间}（{row.实际执行日范围}）：{row.区间解释}")
         teacher_lines.extend(["", "图中蓝线是基础三状态，橙线是加入四个反转后的最终状态，黑线是普通指数的O2O加算基准。曲线上每天都有执行日点：颜色对应-1/0/+1，圆点对应初始三状态，方点对应调整后三状态。红色区间的核心判断不再只看段数，而是同时看0状态覆盖天数、方向覆盖天数和三条O2O曲线。", ""])
         for name in teacher_analysis["figure_names"]:
             teacher_lines.append(f"![{name}](<{(figures / name).resolve()}>)")
             teacher_lines.append("")
-        insert_at = lines.index("## 六、对老师问题的直接回答")
+        insert_at = lines.index("## 六、对问题的直接回答")
         lines[insert_at:insert_at] = teacher_lines
     chart_notes = {
-        "01_历史相似行情_特征距离.png": "结果与分析见第二节：看当前窗口和历史窗口的整体特征距离，不能把距离直接当作收益预测。",
-        "02_历史相似行情_特征对比热图.png": "结果与分析见第二节：看相似性由哪些特征共同构成，避免只盯一个指标。",
-        "03_行情与模型相对状态_2023至最新.png": "结果与分析见第三节：看市场环境变化是否与状态切换密度同步。",
-        "04_多视角同步与确认响应_2023至最新.png": "结果与分析见第三节：看正式确认与单轴代理的差别。",
-        "05_滚动相对标准化与固定锚定代理.png": "结果与分析见第三节：固定锚定仅用于诊断，不替代正式滚动计算。",
-        "06_历史相似阶段未来表现对比.png": "结果与分析见第四节：历史相似阶段后续结果有分化，不能机械外推。",
-        "07_年度收益与方向覆盖对比.png": "结果与分析见第四节：看原始三状态与加入快速反应层后的年度覆盖变化。",
-        "08_本地远端一致性审计.png": "附录技术审计图，仅供复核运行链和日期血缘；本报告不再展开一致性结果。",
+        "01_历史相似行情_特征距离.png": "图在说什么：把最新形成日结束的 60 个交易日窗口，与历史窗口按同一组市场和 1545 机制特征比较。横轴是特征距离，纵轴是历史候选窗口；距离越小，表示整体形态越接近。距离按 sqrt(mean(((候选特征−当前特征)/历史标准差)^2)) 计算，特征包括 20/60/120 日收益、波动、回撤、振幅、跳空，以及方向轴、慢快线、多视角同步、中性占比和切换率。读图时只把它当作结构相似度，不把柱长直接当成收益预测；本次结论是当前环境与若干历史回撤/高波动窗口相似，但相似窗口后续方向并不唯一。",
+        "02_历史相似行情_特征对比热图.png": "图在说什么：逐项解释 01 图中的相似性来自哪些指标。横轴是特征名称，纵轴是当前窗口或历史候选窗口，颜色是 z=(候选特征−当前特征)/历史标准差；接近 0 表示接近当前，正值表示候选更高，负值表示候选更低。读图时看一行的整体颜色组合，而不是只看一格；它用于回答“过去是否出现过类似机制环境”，不使用候选窗口之后的收益来排序。",
+        "03_行情与模型相对状态_2018至最新.png": "图在说什么：展示 2018 年至最新的完整机制链。横轴是形成日日期；从上到下依次为中证500收盘价、60 日收益与波动、rule_axis/slow_engine/fast_engine 相对得分、按形成日对应下一执行日的基础状态背景。60 日收益=收盘价相对 60 个交易日前的变化，60 日波动=日收盘收益标准差×sqrt(252)，rule_axis 是正式方向轴，slow/fast 是冻结引擎的慢/快相对得分。读图时先看市场价格和波动，再看多个得分是否在相近时间变化，最后看状态是否在确认后切换；结论是 2026 的更快响应与市场变化集中和多视角同步相符，不是单独放宽阈值。",
+        "04_多视角同步与确认响应_2018至最新.png": "图在说什么：检验多视角同步、正式状态和确认机制的关系。横轴是日期；第一层是四个 cv 维度，阈值 0.60/0.30 分别表示正向和负向区域；第二层是四视角在 60 日窗口内达到正/负阈值的平均数量；第三层比较正式 base_state 与只按 rule_axis 阈值切换的代理；第四层是 60 日状态切换率。读图时，若四维度在相近日期一起跨阈值、同步均值上升，正式状态才可能在确认规则允许下切换；正式切换少于单轴代理，说明确认与滞回仍在过滤噪声。",
+        "05_滚动相对标准化与固定锚定代理.png": "图在说什么：做滚动相对标准化与固定开发期锚定的机制对照。上图横轴为日期、纵轴为方向轴：红线是正式滚动相对 rule_axis，蓝线是把 2018—2022 开发期各维度经验分布固定后得到的代理。固定代理先把四个维度转换为开发期经验分位数，再按 0.40/0.30/0.15/0.15 加权，≤0.30 判 -1、≥0.70 判 +1，否则为 0；下图横轴为年份、纵轴为年度切换次数，比较正式规则、单轴代理和固定锚定代理。它是诊断反事实，不替代冻结生产逻辑；结论是滚动相对比较适应环境变化，但正式确认/最小驻留/滞回仍使生产状态比代理更保守。",
+        "06_历史相似阶段未来表现对比.png": "图在说什么：只在相似窗口确定之后，事后查看未来 20/60 个交易日的收盘价表现。横轴是历史相似窗口及其结束日期，纵轴是后续收盘收益；20 日收益=close[t+20]/close[t]−1，60 日收益同理。它不是执行日 O2O，也不参与相似窗口排名或信号生成；读图时看正负和分散程度，结论是历史相似窗口后续表现有分化，只能作情景参考。",
+        "07_年度收益与方向覆盖对比.png": "图在说什么：按自然年比较原始三状态与加入四个反转后的 O2O 加算收益。横轴为年份，纵轴为年度累计加算收益百分比，橙柱为原始三状态，红柱为加入四反转；年度收益=该年各执行日策略日收益直接求和，不复利。方向覆盖天数不在柱高里计算，应结合年度表中的 adjusted_directional_days 一起看；结论是反转层通常增加方向暴露和年度收益，但不能只凭单年柱形宣称未来必然改善。",
+        "08_本地远端一致性审计.png": "图在说什么：这是技术审计表，不是新的信号图。横向看每个检查项的 status、远端/本地行数、列名、差异单元格和差异行数；PASS 表示按检查规则一致，VALUE_MISMATCH 表示诊断连续值存在差异。先确认事件信号、日期链和执行日输出，再单独看连续诊断值；该图不改变冻结参数，也不生成信号。",
     }
     for name in image_names[:7]:
         lines.append(f"### {name}")
@@ -1162,7 +1183,7 @@ def run_stage_06(
     _plot_sync_and_confirmation(combined, figures)
     _plot_counterfactual(proxy, counterfactual, figures)
     _plot_forward_quality(analogs, annual, figures)
-    _save_table_figure(audit_rows, figures / "08_本地远端一致性审计.png", "Local / remote parity and date-lineage audit")
+    _save_table_figure(audit_rows, figures / "08_本地远端一致性审计.png", "本地/远端一致性与日期链审计")
     report = _write_report(output_dir, figures, audit, analogs, teacher_analysis)
 
     return {

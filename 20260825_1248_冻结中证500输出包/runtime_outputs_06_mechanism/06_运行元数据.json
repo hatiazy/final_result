@@ -16,17 +16,17 @@
   "exact_raw_to_zscore_counterfactual_available": false,
   "exact_raw_to_zscore_counterfactual_note": "冻结1545面板不保存原始因子中间序列；本次使用固定开发期锚定代理，不回写生产逻辑",
   "teacher_red_window_analysis": {
-    "summary_path": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_06_mechanism/tables/老师红色区间复盘汇总_O2O.csv",
-    "daily_path": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_06_mechanism/tables/老师红色区间复盘逐日_O2O.csv",
+    "summary_path": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_06_mechanism/tables/问题图红色区间复盘汇总_O2O.csv",
+    "daily_path": "/Users/hzy/Desktop/0817合并查看/20260825_1248_冻结中证500输出包/runtime_outputs_06_mechanism/tables/问题图红色区间复盘逐日_O2O.csv",
     "full_period": {
-      "name": "29_老师原图同时间范围_2023至最新_三状态与指数_O2O.png",
+      "name": "29_问题图同时间范围_2023至最新_三状态与指数_O2O.png",
       "date_min": "2023-01-03",
       "date_max": "2026-08-21",
       "rows": 881
     },
     "figure_names": [
-      "29_老师原图同时间范围_2023至最新_三状态与指数_O2O.png",
-      "28_老师红色区间_三状态与指数_O2O局部复盘.png",
+      "29_问题图同时间范围_2023至最新_三状态与指数_O2O.png",
+      "28_问题图红色区间_三状态与指数_O2O局部复盘.png",
       "28A_红色区间1_三状态与指数_O2O局部复盘.png",
       "28B_红色区间2_三状态与指数_O2O局部复盘.png",
       "28C_红色区间3_三状态与指数_O2O局部复盘.png"
