@@ -1288,6 +1288,85 @@ def _read_stage04_frame(stage04_dir: Path) -> pd.DataFrame:
     return frame.sort_values("实际执行日").reset_index(drop=True)
 
 
+def _write_2026_nav_comparison(frame: pd.DataFrame, output_dir: Path) -> dict[str, Any] | None:
+    """Write a clean 2026-only version of the three NAV curves.
+
+    This is deliberately based only on rows with an observed next open.  The
+    latest formation/execution row without a future open remains in the audit,
+    but it is not drawn as a return point or filled into the curve.
+    """
+
+    year = frame.loc[
+        frame["O2O可评价"] & frame["实际执行日"].dt.year.eq(2026)
+    ].copy()
+    if year.empty:
+        return None
+
+    date_end = year["实际执行日"].max()
+    year["raw_nav_2026"] = 1.0 + year["原始策略日收益"].cumsum()
+    year["adjusted_nav_2026"] = 1.0 + year["调整策略日收益"].cumsum()
+    year["index_nav_2026"] = 1.0 + year["指数日收益"].cumsum()
+    baseline_date = pd.Timestamp("2026-01-01")
+    plot_dates = pd.concat([pd.Series([baseline_date]), year["实际执行日"]], ignore_index=True)
+    raw_nav = pd.concat([pd.Series([1.0]), year["raw_nav_2026"]], ignore_index=True)
+    adjusted_nav = pd.concat([pd.Series([1.0]), year["adjusted_nav_2026"]], ignore_index=True)
+    index_nav = pd.concat([pd.Series([1.0]), year["index_nav_2026"]], ignore_index=True)
+    raw_states = pd.concat([pd.Series([np.nan]), year["原始状态"]], ignore_index=True)
+    adjusted_states = pd.concat([pd.Series([np.nan]), year["调整后三状态"]], ignore_index=True)
+    fig, ax = plt.subplots(figsize=(13.2, 6.0), dpi=150)
+    _plot_curve_with_execution_points(
+        ax,
+        plot_dates,
+        raw_nav,
+        "原始三状态 NAV",
+        "#f58518",
+        state_specs=[(raw_states, STATE_MARKER_SHAPES["raw"])],
+        linewidth=1.2,
+    )
+    _plot_curve_with_execution_points(
+        ax,
+        plot_dates,
+        adjusted_nav,
+        "调整后三状态 NAV",
+        "#d62728",
+        state_specs=[(adjusted_states, STATE_MARKER_SHAPES["adjusted"])],
+        linewidth=1.2,
+    )
+    _plot_curve_with_execution_points(
+        ax,
+        plot_dates,
+        index_nav,
+        "中证500买入持有 NAV",
+        "#4285f4",
+        linewidth=1.0,
+    )
+    ax.axhline(1.0, color="#666", linewidth=0.55, linestyle=":")
+    ax.set_title(
+        f"1545 三状态：2026 年原始、调整与指数买入持有（O2O 加算净值）\n"
+        f"2026 年第一可评价执行日归一化为 1.0；可评价执行日截至 {date_end:%Y-%m-%d}",
+        fontsize=13,
+        weight="bold",
+    )
+    ax.set_ylabel("NAV")
+    ax.set_xlabel("执行日")
+    ax.grid(True, alpha=0.35, linewidth=0.45)
+    ax.xaxis.set_major_locator(mdates.MonthLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m"))
+    ax.tick_params(axis="x", rotation=35)
+    _add_state_marker_legend(ax, ncol=3, loc="upper left")
+    fig.tight_layout()
+    output = output_dir / "2026_原始与调整_指数_O2O净值状态.png"
+    fig.savefig(output, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    return {
+        "path": str(output),
+        "rows": int(len(year)),
+        "date_min": str(year["实际执行日"].min().date()),
+        "date_max": str(date_end.date()),
+        "no_future_placeholder_rows": True,
+    }
+
+
 def _write_2026_analysis(frame: pd.DataFrame, output_dir: Path) -> dict[str, Any]:
     """Produce the explicit 2026 decomposition requested for Notebook 05."""
 
@@ -1392,12 +1471,14 @@ def _write_2026_analysis(frame: pd.DataFrame, output_dir: Path) -> dict[str, Any
         fig.savefig(output_dir / "2026_表现分解_收益与状态.png", dpi=140, bbox_inches="tight", facecolor="white")
         plt.close(fig)
 
+    nav_chart = _write_2026_nav_comparison(frame, output_dir)
     return {
         "rows_2026": int(len(year)),
         "months_2026": int(len(monthly.loc[monthly["month"].str.startswith("2026")])) if not monthly.empty else 0,
         "total_adjusted_return_pct": float(year["调整策略日收益"].sum() * 100.0) if not year.empty else np.nan,
         "total_index_return_pct": float(year["指数日收益"].sum() * 100.0) if not year.empty else np.nan,
         "adjusted_active_days": int(year["调整后三状态"].ne(0).sum()) if not year.empty else 0,
+        "nav_chart_2026": nav_chart,
     }
 
 
